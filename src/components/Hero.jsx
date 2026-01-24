@@ -13,7 +13,7 @@ const Hero = () => {
                 </div>
 
                 <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white mb-8 animate-fade-in-up delay-100">
-                    Crie ofertas <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-yellow-200">irresistíveis</span><br />
+                    Crie imagens <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary to-yellow-200">incríveis</span><br />
                     em segundos com IA
                 </h1>
 
