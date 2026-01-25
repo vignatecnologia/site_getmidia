@@ -6,7 +6,7 @@ const solutions = [
     {
         id: 'produto',
         name: 'GetMídia Produto',
-        logo: '/logos/logo-produto.png',
+        logo: '/logos/logo-produto-v2.png',
         description: 'Crie fotos incríveis dos seus produtos para e-commerce e redes sociais.',
         status: 'active',
         color: 'text-orange-500',
@@ -14,19 +14,9 @@ const solutions = [
         border: 'border-orange-500/20'
     },
     {
-        id: 'auto',
-        name: 'GetMídia Auto',
-        logo: '/logos/logo-auto.png',
-        description: 'Automação de fotos para revendas e concessionárias de veículos.',
-        status: 'active',
-        color: 'text-red-500',
-        bg: 'bg-red-500/10',
-        border: 'border-red-500/20'
-    },
-    {
         id: 'moda',
         name: 'GetMídia Moda',
-        logo: '/logos/logo-moda.png',
+        logo: '/logos/logo-moda-v2.png',
         description: 'Vista suas roupas em modelos reais com inteligência artificial.',
         status: 'active',
         color: 'text-purple-500',
@@ -34,21 +24,21 @@ const solutions = [
         border: 'border-purple-500/20'
     },
     {
-        id: 'otica',
-        name: 'GetMídia Ótica',
-        logo: '/logos/logo-otica.png',
-        description: 'Prove óculos virtualmente em rostos variados para seu catálogo.',
+        id: 'food',
+        name: 'GetMídia Food',
+        logo: '/logos/logo-food-v2.png',
+        description: 'Dê vida ao seu cardápio com imagens de dar água na boca, criadas instantaneamente.',
         status: 'active',
-        color: 'text-teal-500',
-        bg: 'bg-teal-500/10',
-        border: 'border-teal-500/20'
+        color: 'text-red-500',
+        bg: 'bg-red-500/10',
+        border: 'border-red-500/20'
     },
     {
-        id: 'farma',
-        name: 'GetMídia Farma',
-        logo: '/logos/logo-farma.png',
-        description: 'Soluções visuais rápidas para farmácias e dermocosméticos.',
-        status: 'coming_soon',
+        id: 'auto',
+        name: 'GetMídia Auto',
+        logo: '/logos/logo-auto-v2.png',
+        description: 'Automação de fotos para revendas e concessionárias de veículos.',
+        status: 'active',
         color: 'text-blue-500',
         bg: 'bg-blue-500/10',
         border: 'border-blue-500/20'
