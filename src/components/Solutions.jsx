@@ -1,6 +1,6 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-import { ArrowRight, Clock } from 'lucide-react'
+import { ArrowRight, Clock, Box, Shirt, Utensils, Car, Glasses, PawPrint } from 'lucide-react'
 
 const solutions = [
     {
@@ -11,7 +11,8 @@ const solutions = [
         status: 'active',
         color: 'text-orange-500',
         bg: 'bg-orange-500/10',
-        border: 'border-orange-500/20'
+        border: 'border-orange-500/20',
+        icon: <Box className="w-6 h-6" />
     },
     {
         id: 'moda',
@@ -21,7 +22,8 @@ const solutions = [
         status: 'active',
         color: 'text-purple-500',
         bg: 'bg-purple-500/10',
-        border: 'border-purple-500/20'
+        border: 'border-purple-500/20',
+        icon: <Shirt className="w-6 h-6" />
     },
     {
         id: 'food',
@@ -31,7 +33,8 @@ const solutions = [
         status: 'active',
         color: 'text-red-500',
         bg: 'bg-red-500/10',
-        border: 'border-red-500/20'
+        border: 'border-red-500/20',
+        icon: <Utensils className="w-6 h-6" />
     },
     {
         id: 'auto',
@@ -41,7 +44,8 @@ const solutions = [
         status: 'active',
         color: 'text-blue-500',
         bg: 'bg-blue-500/10',
-        border: 'border-blue-500/20'
+        border: 'border-blue-500/20',
+        icon: <Car className="w-6 h-6" />
     },
     {
         id: 'otica',
@@ -51,7 +55,8 @@ const solutions = [
         status: 'active',
         color: 'text-teal-500',
         bg: 'bg-teal-500/10',
-        border: 'border-teal-500/20'
+        border: 'border-teal-500/20',
+        icon: <Glasses className="w-6 h-6" />
     },
     {
         id: 'pet',
@@ -61,7 +66,8 @@ const solutions = [
         status: 'active',
         color: 'text-green-500',
         bg: 'bg-green-500/10',
-        border: 'border-green-500/20'
+        border: 'border-green-500/20',
+        icon: <PawPrint className="w-6 h-6" />
     }
 ]
 
@@ -88,6 +94,10 @@ const Solutions = () => {
                             transition={{ delay: index * 0.1 }}
                             className={`relative rounded-2xl p-8 border ${solution.status === 'active' ? 'border-primary/30 bg-gray-900' : 'border-gray-800 bg-gray-900/50 grayscale hover:grayscale-0 transition-all duration-500'}`}
                         >
+                            <div className={`absolute top-8 right-8 p-3 rounded-full bg-gray-800/50 backdrop-blur-sm border border-gray-700 ${solution.color}`}>
+                                {solution.icon}
+                            </div>
+
                             <div className="h-20 mb-6 flex items-center justify-start">
                                 <img
                                     src={solution.logo}
