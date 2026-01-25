@@ -1,5 +1,6 @@
 import React from 'react'
 import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
 import { ArrowRight, Clock, Box, Shirt, Utensils, Car, Glasses, PawPrint } from 'lucide-react'
 
 const solutions = [
@@ -112,9 +113,9 @@ const Solutions = () => {
 
                             <div className="flex items-center justify-between">
                                 {solution.status === 'active' ? (
-                                    <button className="flex items-center gap-2 text-primary font-bold hover:gap-3 transition-all">
+                                    <Link to={`/${solution.id}`} className="flex items-center gap-2 text-primary font-bold hover:gap-3 transition-all">
                                         Saiba mais <ArrowRight className="w-4 h-4" />
-                                    </button>
+                                    </Link>
                                 ) : (
                                     <span className="flex items-center gap-2 text-gray-500 text-sm font-medium px-3 py-1 rounded-full bg-gray-800 border border-gray-700">
                                         <Clock className="w-4 h-4" /> Em Breve
