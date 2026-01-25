@@ -42,6 +42,26 @@ const solutions = [
         color: 'text-blue-500',
         bg: 'bg-blue-500/10',
         border: 'border-blue-500/20'
+    },
+    {
+        id: 'otica',
+        name: 'GetMídia Ótica',
+        logo: '/logos/logo-otica-v2.png',
+        description: 'Prove óculos virtualmente em rostos variados para seu catálogo.',
+        status: 'active',
+        color: 'text-teal-500',
+        bg: 'bg-teal-500/10',
+        border: 'border-teal-500/20'
+    },
+    {
+        id: 'pet',
+        name: 'GetMídia PET',
+        logo: '/logos/logo-pet-v2.png',
+        description: 'Transforme fotos dos seus pets em modelos profissionais para produtos pets.',
+        status: 'active',
+        color: 'text-green-500',
+        bg: 'bg-green-500/10',
+        border: 'border-green-500/20'
     }
 ]
 
