@@ -22,13 +22,13 @@ const Hero = () => {
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in-up delay-300">
-                    <Link
-                        to="/register"
+                    <a
+                        href="#pricing"
                         className="px-8 py-4 bg-primary text-black rounded-xl font-bold text-lg hover:bg-yellow-400 transition-all hover:scale-105 hover:shadow-xl hover:shadow-primary/20 flex items-center gap-2"
                     >
-                        Começar Agora
+                        Ver Planos e Preços
                         <ArrowRight className="w-5 h-5" />
-                    </Link>
+                    </a>
                     <a
                         href="#demo"
                         className="px-8 py-4 bg-gray-800 text-white rounded-xl font-bold text-lg hover:bg-gray-700 transition-all border border-gray-700"

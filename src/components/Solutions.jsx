@@ -18,7 +18,7 @@ const solutions = [
         name: 'GetMídia Auto',
         logo: '/logos/logo-auto.png',
         description: 'Automação de fotos para revendas e concessionárias de veículos.',
-        status: 'coming_soon',
+        status: 'active',
         color: 'text-red-500',
         bg: 'bg-red-500/10',
         border: 'border-red-500/20'
@@ -28,7 +28,7 @@ const solutions = [
         name: 'GetMídia Moda',
         logo: '/logos/logo-moda.png',
         description: 'Vista suas roupas em modelos reais com inteligência artificial.',
-        status: 'coming_soon',
+        status: 'active',
         color: 'text-purple-500',
         bg: 'bg-purple-500/10',
         border: 'border-purple-500/20'
@@ -38,7 +38,7 @@ const solutions = [
         name: 'GetMídia Ótica',
         logo: '/logos/logo-otica.png',
         description: 'Prove óculos virtualmente em rostos variados para seu catálogo.',
-        status: 'coming_soon',
+        status: 'active',
         color: 'text-teal-500',
         bg: 'bg-teal-500/10',
         border: 'border-teal-500/20'
@@ -93,7 +93,7 @@ const Solutions = () => {
                             <div className="flex items-center justify-between">
                                 {solution.status === 'active' ? (
                                     <button className="flex items-center gap-2 text-primary font-bold hover:gap-3 transition-all">
-                                        Acessar Agora <ArrowRight className="w-4 h-4" />
+                                        Saiba mais <ArrowRight className="w-4 h-4" />
                                     </button>
                                 ) : (
                                     <span className="flex items-center gap-2 text-gray-500 text-sm font-medium px-3 py-1 rounded-full bg-gray-800 border border-gray-700">
