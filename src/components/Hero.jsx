@@ -9,7 +9,7 @@ const Hero = () => {
             <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center z-10">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-sm font-medium mb-8 animate-fade-in-up">
                     <Sparkles className="w-4 h-4" />
-                    <span>Inteligência Artificial para E-commerce</span>
+                    <span>Inteligência Artificial para o seu Negócio</span>
                 </div>
 
                 <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight text-white mb-8 animate-fade-in-up delay-100">

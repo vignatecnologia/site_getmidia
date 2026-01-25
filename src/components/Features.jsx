@@ -11,12 +11,12 @@ const features = [
     {
         icon: <Calendar className="w-8 h-8 text-primary" />,
         title: "Temas Sazonais",
-        description: "Centenas de templates prontos para datas comemorativas: Black Friday, Natal, Dia das Mães e muito mais."
+        description: "Escolha uma data comemorativa e deixe a IA montar o cenário: Black Friday, Natal, Dia das Mães e muito mais."
     },
     {
         icon: <Type className="w-8 h-8 text-primary" />,
         title: "Editor de Texto Ágil",
-        description: "Adicione preços, ofertas e copys persuasivas rapidamente. Personalize fontes e cores para alinhar com sua marca."
+        description: "Altere preço, descrição, crie novas camadas de texto. Personalize fontes e cores para alinhar com sua marca."
     },
     {
         icon: <ImageIcon className="w-8 h-8 text-primary" />,
@@ -31,7 +31,7 @@ const features = [
     {
         icon: <Zap className="w-8 h-8 text-primary" />,
         title: "Geração Rápida",
-        description: "Não perca tempo com designers ou ferramentas complexas. Tenha seu post pronto em menos de 10 segundos."
+        description: "Não perca tempo com designers ou ferramentas complexas. Tenha seu post pronto em segundos."
     }
 ]
 
