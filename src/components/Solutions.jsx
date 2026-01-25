@@ -131,7 +131,7 @@ const Solutions = () => {
                     </p>
                     <a
                         href="#contact"
-                        className="inline-flex items-center gap-2 px-6 py-3 bg-gray-800 text-white rounded-full font-bold hover:bg-gray-700 transition-all border border-gray-700 hover:border-primary/50"
+                        className="inline-flex items-center gap-2 px-8 py-4 bg-gray-800 text-white rounded-xl font-bold text-lg hover:bg-gray-700 transition-all border border-gray-700 hover:border-primary/50"
                     >
                         <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                         Fale Conosco
