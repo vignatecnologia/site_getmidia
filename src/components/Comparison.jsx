@@ -59,7 +59,7 @@ const Comparison = () => {
                         className="bg-primary/5 rounded-2xl p-8 border border-primary/30 relative overflow-hidden"
                     >
                         <div className="absolute top-0 right-0 bg-primary text-black text-xs font-bold px-3 py-1 rounded-bl-lg">
-                            RECOMENDADO
+                            MELHOR ESCOLHA
                         </div>
 
                         <div className="flex items-center gap-3 mb-6">
