@@ -27,7 +27,7 @@ const Pricing = () => {
 
         try {
             setLoadingPlan(planId)
-            const { data, error } = await supabase.functions.invoke('hyper-worker', {
+            const { data, error } = await supabase.functions.invoke('create-checkout', {
                 body: { planId }
             })
 
