@@ -9,7 +9,7 @@ const solutions = [
         logo: '/logos/logo-produto-v2.png',
         description: 'Crie fotos incríveis dos seus produtos para e-commerce e redes sociais.',
         status: 'active',
-        color: 'text-orange-500',
+        color: 'text-yellow-500',
         bg: 'bg-orange-500/10',
         border: 'border-orange-500/20',
         icon: <Box className="w-6 h-6" />
@@ -92,7 +92,7 @@ const Solutions = () => {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ delay: index * 0.1 }}
-                            className={`relative rounded-2xl p-8 border ${solution.status === 'active' ? 'border-primary/30 bg-gray-900' : 'border-gray-800 bg-gray-900/50 grayscale hover:grayscale-0 transition-all duration-500'}`}
+                            className={`relative rounded-2xl p-8 border ${solution.status === 'active' ? 'border-primary/30 bg-gray-900 hover:border-primary hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/10' : 'border-gray-800 bg-gray-900/50 grayscale hover:grayscale-0'} transition-all duration-300`}
                         >
                             <div className={`absolute top-8 right-8 p-3 rounded-full bg-gray-800/50 backdrop-blur-sm border border-gray-700 ${solution.color}`}>
                                 {solution.icon}
@@ -123,6 +123,19 @@ const Solutions = () => {
                             </div>
                         </motion.div>
                     ))}
+                </div>
+
+                <div className="mt-16 text-center">
+                    <p className="text-gray-400 text-lg mb-6">
+                        Tem uma ídeia para um novo GetMídia?
+                    </p>
+                    <a
+                        href="#contact"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-gray-800 text-white rounded-full font-bold hover:bg-gray-700 transition-all border border-gray-700 hover:border-primary/50"
+                    >
+                        <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                        Fale Conosco
+                    </a>
                 </div>
             </div>
         </section>

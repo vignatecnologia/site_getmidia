@@ -10,6 +10,7 @@ import Footer from '../components/Footer'
 import Comparison from '../components/Comparison'
 import FAQ from '../components/FAQ'
 import Testimonials from '../components/Testimonials'
+import Contact from '../components/Contact'
 
 const Home = () => {
     return (
@@ -23,6 +24,7 @@ const Home = () => {
                 <Testimonials />
                 <Pricing />
                 <FAQ />
+                <Contact />
             </main>
             <Footer />
         </div>
