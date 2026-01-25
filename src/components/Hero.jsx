@@ -18,7 +18,7 @@ const Hero = () => {
                 </h1>
 
                 <p className="mt-4 max-w-2xl mx-auto text-xl text-gray-400 mb-10 animate-fade-in-up delay-200">
-                    Transforme fotos simples de produtos em posts profissionais de alta conversão. Sem design, sem complicação.
+                    Transforme fotos simples em posts profissionais de alta conversão. Escolha um tema, edite com seus textos e compartilhe.
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-fade-in-up delay-300">
