@@ -5,7 +5,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react'
 const faqs = [
     {
         question: "Como funciona a geração de imagens?",
-        answer: "Nossa IA analisa a foto do seu produto e o insere em cenários profissionais criados digitalmente. Você não precisa enviar o produto físico para nós."
+        answer: "Nossa IA analisa a foto enviada e a insere em cenários profissionais criados digitalmente."
     },
     {
         question: "Preciso de conhecimentos em design?",
@@ -21,7 +21,7 @@ const faqs = [
     },
     {
         question: "Qual a qualidade das imagens geradas?",
-        answer: "As imagens são geradas em alta resolução (até 4K), perfeitas para Instagram, Facebook, LinkedIn e materiais impressos."
+        answer: "As imagens são geradas em alta resolução, perfeitas para Instagram, Facebook, LinkedIn, WhatsApp e materiais impressos."
     }
 ]
 
@@ -63,7 +63,7 @@ const FAQ = () => {
                                         exit={{ height: 0, opacity: 0 }}
                                         transition={{ duration: 0.3 }}
                                     >
-                                        <div className="p-6 pt-0 text-gray-400 border-t border-gray-800">
+                                        <div className="p-6 text-gray-400 border-t border-gray-800">
                                             {faq.answer}
                                         </div>
                                     </motion.div>

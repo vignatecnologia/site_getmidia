@@ -13,7 +13,7 @@ const Footer = () => {
                             <img src="/logo-new.png" alt="GetMídia Logo" className="h-[55px] w-auto" />
                         </Link>
                         <p className="text-gray-400 text-sm leading-relaxed">
-                            Automação de design para e-commerce. Aumente suas vendas com imagens que convertem.
+                            O GetMída transforma fotos dos seus produtos em imagens profissionais de alta qualidade, prontas para postar nas suas redes sociais.
                         </p>
                     </div>
 
