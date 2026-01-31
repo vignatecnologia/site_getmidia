@@ -4,6 +4,7 @@ import Footer from '../components/Footer'
 import { motion } from 'framer-motion'
 import { Box, CheckCircle, Zap, Image as ImageIcon, ArrowRight, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import heroDemoImage from '../assets/hero_produto_demo.png'
 
 const features = [
     {
@@ -121,22 +122,9 @@ const GetmidiaProduct = () => {
                             transition={{ duration: 0.6, delay: 0.2 }}
                             className="relative"
                         >
-                            {/* Placeholder for Product Demo Image/Animation */}
-                            <div className="aspect-square rounded-3xl bg-gray-800 border border-gray-700 overflow-hidden relative shadow-2xl shadow-black/50 group">
-                                <div className="absolute inset-0 bg-gradient-to-br from-yellow-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <img src="/logo-produto-v2.png" alt="Demo" className="w-32 h-32 object-contain opacity-50" />
-                                </div>
-                                {/* Mock UI Elements */}
-                                <div className="absolute bottom-6 left-6 right-6 bg-gray-900/90 backdrop-blur-md p-4 rounded-xl border border-gray-700">
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                                        <span className="text-xs font-mono text-green-500">AI GENERATING...</span>
-                                    </div>
-                                    <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                                        <div className="h-full bg-yellow-500 w-[70%]" />
-                                    </div>
-                                </div>
+                            {/* Product Demo Image */}
+                            <div className="aspect-square relative flex items-center justify-center">
+                                <img src={heroDemoImage} alt="Demonstração do Produto" className="w-full h-full object-contain" />
                             </div>
                         </motion.div>
                     </div>

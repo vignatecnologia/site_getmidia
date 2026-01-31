@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
-import { Users, Shield, LogOut, ArrowLeft, Search, Image, Layout } from 'lucide-react';
+import { Users, Shield, LogOut, Search, Image, Edit2, Check, X, Loader2, Coins } from 'lucide-react';
 import SiteGalleries from '../components/Admin/SiteGalleries';
 
 const AdminPanel = () => {
@@ -10,6 +10,10 @@ const AdminPanel = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [activeTab, setActiveTab] = useState('users'); // 'users' or 'galleries'
     const navigate = useNavigate();
+
+    const [editingId, setEditingId] = useState(null);
+    const [editCredits, setEditCredits] = useState(0);
+    const [updating, setUpdating] = useState(false);
 
     const ADMIN_EMAIL = 'vignatecnologia@gmail.com';
 
@@ -71,6 +75,52 @@ const AdminPanel = () => {
         navigate('/login');
     };
 
+    const handleEditClick = (user) => {
+        setEditingId(user.id);
+        setEditCredits(user.credits || 0);
+    };
+
+    const handleSaveCredits = async (userId) => {
+        setUpdating(true);
+        try {
+            const { data: { session } } = await supabase.auth.getSession();
+            const token = session?.access_token;
+            if (!token) throw new Error("No session token");
+
+            const PROJECT_REF = 'qyruweidqlqniqdatnxx';
+            // Try to use the same project ref context
+            const FUNCTION_URL = `https://${PROJECT_REF}.supabase.co/functions/v1/update-user-credits`;
+
+            const response = await fetch(FUNCTION_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+                    'X-Supabase-Auth': token
+                },
+                body: JSON.stringify({ userId, credits: parseInt(editCredits) })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Falha ao atualizar');
+            }
+
+            // Update local state
+            setUsers(users.map(u =>
+                u.id === userId ? { ...u, credits: parseInt(editCredits) } : u
+            ));
+            setEditingId(null);
+            alert('Créditos atualizados com sucesso!');
+
+        } catch (error) {
+            console.error('Error updating credits:', error);
+            alert('Erro ao atualizar créditos: ' + error.message);
+        } finally {
+            setUpdating(false);
+        }
+    };
+
     const filteredUsers = users.filter(user =>
         (user.full_name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
         (user.email?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
@@ -104,8 +154,8 @@ const AdminPanel = () => {
                     <button
                         onClick={() => setActiveTab('users')}
                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'users'
-                                ? 'bg-primary/20 text-primary border border-primary/20'
-                                : 'text-gray-400 hover:bg-gray-700 hover:text-white'
+                            ? 'bg-primary/20 text-primary border border-primary/20'
+                            : 'text-gray-400 hover:bg-gray-700 hover:text-white'
                             }`}
                     >
                         <Users className="w-5 h-5" />
@@ -115,8 +165,8 @@ const AdminPanel = () => {
                     <button
                         onClick={() => setActiveTab('galleries')}
                         className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'galleries'
-                                ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20'
-                                : 'text-gray-400 hover:bg-gray-700 hover:text-white'
+                            ? 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20'
+                            : 'text-gray-400 hover:bg-gray-700 hover:text-white'
                             }`}
                     >
                         <Image className="w-5 h-5" />
@@ -190,6 +240,7 @@ const AdminPanel = () => {
                                                 <th className="p-4 font-semibold">Telefone</th>
                                                 <th className="p-4 font-semibold text-center">Créditos</th>
                                                 <th className="p-4 font-semibold text-right">Cadastrado em</th>
+                                                <th className="p-4 font-semibold text-center">Ações</th>
                                             </tr>
                                         </thead>
                                         <tbody className="divide-y divide-gray-700">
@@ -210,13 +261,55 @@ const AdminPanel = () => {
                                                             {user.phone || '-'}
                                                         </td>
                                                         <td className="p-4 text-center">
-                                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${(user.credits || 0) > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-700 text-gray-400'
-                                                                }`}>
-                                                                {user.credits !== undefined ? user.credits : 'N/A'}
-                                                            </span>
+                                                            {editingId === user.id ? (
+                                                                <div className="flex items-center justify-center gap-2">
+                                                                    <input
+                                                                        type="number"
+                                                                        value={editCredits}
+                                                                        onChange={(e) => setEditCredits(e.target.value)}
+                                                                        className="w-20 bg-gray-900 border border-gray-600 rounded px-2 py-1 text-center font-bold text-yellow-500 focus:border-yellow-500 outline-none"
+                                                                    />
+                                                                </div>
+                                                            ) : (
+                                                                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${(user.credits || 0) > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-700 text-gray-400'
+                                                                    }`}>
+                                                                    <Coins className="w-3 h-3" />
+                                                                    {user.credits !== undefined ? user.credits : 'N/A'}
+                                                                </span>
+                                                            )}
                                                         </td>
                                                         <td className="p-4 text-right text-gray-400 text-sm">
                                                             {user.created_at ? new Date(user.created_at).toLocaleDateString('pt-BR') : '-'}
+                                                        </td>
+                                                        <td className="p-4 text-center">
+                                                            {editingId === user.id ? (
+                                                                <div className="flex items-center justify-center gap-2">
+                                                                    <button
+                                                                        onClick={() => handleSaveCredits(user.id)}
+                                                                        disabled={updating}
+                                                                        className="p-1.5 bg-green-500/10 text-green-500 hover:bg-green-500/20 rounded-lg transition-colors"
+                                                                        title="Salvar"
+                                                                    >
+                                                                        {updating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                                                                    </button>
+                                                                    <button
+                                                                        onClick={() => setEditingId(null)}
+                                                                        disabled={updating}
+                                                                        className="p-1.5 bg-red-500/10 text-red-500 hover:bg-red-500/20 rounded-lg transition-colors"
+                                                                        title="Cancelar"
+                                                                    >
+                                                                        <X className="w-4 h-4" />
+                                                                    </button>
+                                                                </div>
+                                                            ) : (
+                                                                <button
+                                                                    onClick={() => handleEditClick(user)}
+                                                                    className="p-1.5 hover:bg-gray-700 text-gray-400 hover:text-white rounded-lg transition-colors"
+                                                                    title="Editar Créditos"
+                                                                >
+                                                                    <Edit2 className="w-4 h-4" />
+                                                                </button>
+                                                            )}
                                                         </td>
                                                     </tr>
                                                 ))
