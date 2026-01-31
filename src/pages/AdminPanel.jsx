@@ -83,28 +83,13 @@ const AdminPanel = () => {
     const handleSaveCredits = async (userId) => {
         setUpdating(true);
         try {
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
-            if (!token) throw new Error("No session token");
+            // Attempt direct database update first
+            const { error } = await supabase
+                .from('profiles')
+                .update({ credits: parseInt(editCredits) })
+                .eq('id', userId);
 
-            const PROJECT_REF = 'qyruweidqlqniqdatnxx';
-            // Try to use the same project ref context
-            const FUNCTION_URL = `https://${PROJECT_REF}.supabase.co/functions/v1/update-user-credits`;
-
-            const response = await fetch(FUNCTION_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-                    'X-Supabase-Auth': token
-                },
-                body: JSON.stringify({ userId, credits: parseInt(editCredits) })
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Falha ao atualizar');
-            }
+            if (error) throw error;
 
             // Update local state
             setUsers(users.map(u =>
