@@ -84,12 +84,18 @@ const AdminPanel = () => {
         setUpdating(true);
         try {
             // Attempt direct database update first
-            const { error } = await supabase
+            const { error, count } = await supabase
                 .from('profiles')
                 .update({ credits: parseInt(editCredits) })
-                .eq('id', userId);
+                .eq('id', userId)
+                .select('', { count: 'exact' });
 
             if (error) throw error;
+
+            // If RLS blocks update, count might be 0 without error
+            if (count === 0) {
+                throw new Error("Permissão negada (RLS) ou usuário não encontrado.");
+            }
 
             // Update local state
             setUsers(users.map(u =>
