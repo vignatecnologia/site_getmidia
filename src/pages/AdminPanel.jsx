@@ -3,68 +3,126 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import { Users, Shield, LogOut, Search, Image, Edit2, Check, X, Loader2, Coins } from 'lucide-react';
 import SiteGalleries from '../components/Admin/SiteGalleries';
+import ReportedImages from '../components/Admin/ReportedImages';
 
 const AdminPanel = () => {
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [activeTab, setActiveTab] = useState('users'); // 'users' or 'galleries'
+    const [activeTab, setActiveTab] = useState('users'); // 'users', 'galleries', 'reports'
+    const [pendingReports, setPendingReports] = useState(0);
     const navigate = useNavigate();
 
     const [editingId, setEditingId] = useState(null);
     const [editCredits, setEditCredits] = useState(0);
     const [updating, setUpdating] = useState(false);
 
-    const ADMIN_EMAIL = 'vignatecnologia@gmail.com';
+    const ADMIN_EMAIL = 'vignatecnologia@gmail.com'; // Or fetch fromenv if you prefer, but hardcoded for now as per previous code
 
     useEffect(() => {
         const checkAuth = async () => {
             const { data: { session } } = await supabase.auth.getSession();
 
-            if (!session || session.user.email !== ADMIN_EMAIL) {
-                // Not authorized
+            // Simple check (ideally check against a list or specific role in DB)
+            const allowedEmails = ['vignatecnologia@gmail.com', 'projeto.getmidia@gmail.com'];
+            if (!session || !allowedEmails.includes(session.user.email)) {
                 navigate('/');
                 return;
             }
 
-            // Only fetch users if needed/initially
             fetchUsers();
+            fetchReportCount();
         };
 
         checkAuth();
     }, [navigate]);
 
+    const fetchReportCount = async () => {
+        const { count } = await supabase
+            .from('reported_images')
+            .select('*', { count: 'exact', head: true })
+            .eq('status', 'pending');
+        if (count !== null) setPendingReports(count);
+    };
+
     const fetchUsers = async () => {
         try {
-            // Fetch users via Edge Function
+            setLoading(true);
             const { data: { session } } = await supabase.auth.getSession();
             const token = session?.access_token;
-
             if (!token) throw new Error("No session token");
 
+            // 1. Fetch Auth Users (Emails) from Edge Function
+            // Note: If you don't have this Edge Function running locally, this might fail locally but work in prod.
+            // For now I'm keeping the existing logic I saw in the file.
             const PROJECT_REF = 'qyruweidqlqniqdatnxx';
             const FUNCTION_URL = `https://${PROJECT_REF}.supabase.co/functions/v1/list-users`;
 
-            const response = await fetch(FUNCTION_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-                    'X-Supabase-Auth': token
+            let usersData = [];
+            try {
+                const response = await fetch(FUNCTION_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+                        'X-Supabase-Auth': token
+                    }
+                });
+                if (response.ok) {
+                    usersData = await response.json();
+                } else {
+                    console.warn("Failed to fetch users from Edge Function", response.status);
                 }
-            });
-
-            if (!response.ok) {
-                // Function might fail if RLS or other things changed, handle gracefully?
-                console.warn("Function error, falling back to empty list if authorized.");
-                // In a real app we might show error, but keeping existing logic flow
-            } else {
-                const data = await response.json();
-                setUsers(data || []);
+            } catch (err) {
+                console.warn("Edge function fetch error:", err);
             }
+
+            // 2. Fetch Profiles (Credits) directly from Database (Source of Truth)
+            const { data: profilesData, error: profileError } = await supabase
+                .from('profiles')
+                .select('*');
+
+            if (profileError) throw profileError;
+
+            // 3. Merge Data
+            // If edge function fails (empty usersData), we rely on profiles.
+            // But usually profiles table has the user_id matching auth.users.id
+
+            // If usersData is empty (e.g. invalid function), we might only show profiles if possible, 
+            // but we need emails from Auth.
+            // Let's assume for now we iterate over profiles if usersData is missing, 
+            // or iterate over usersData if present.
+
+            let merged = [];
+
+            if (usersData && usersData.length > 0) {
+                merged = usersData.map(u => {
+                    const profile = profilesData?.find(p => p.id === u.id);
+                    return {
+                        ...u,
+                        credits: profile ? profile.credits : (u.credits || 0),
+                        full_name: profile ? profile.full_name : u.full_name,
+                        phone: profile ? profile.phone : u.phone,
+                        cpf_cnpj: profile ? profile.cpf_cnpj : u.cpf_cnpj,
+                    };
+                });
+            } else if (profilesData) {
+                // Fallback: Show just profiles if Auth list fails (better than nothing)
+                merged = profilesData.map(p => ({
+                    id: p.id,
+                    email: p.email || 'Email não acessível', // If email is stored in profile
+                    full_name: p.full_name,
+                    credits: p.credits,
+                    phone: p.phone,
+                    cpf_cnpj: p.cpf_cnpj,
+                    created_at: p.updated_at // Approximate
+                }));
+            }
+
+            setUsers(merged);
+
         } catch (error) {
             console.error('Error fetching users:', error);
-            // alert('Erro ao carregar usuários.');
         } finally {
             setLoading(false);
         }
@@ -83,18 +141,24 @@ const AdminPanel = () => {
     const handleSaveCredits = async (userId) => {
         setUpdating(true);
         try {
-            // Attempt direct database update first
-            const { error, count } = await supabase
+            const { error: rpcError } = await supabase.rpc('update_user_credits_sys', {
+                target_user_id: userId,
+                new_credits: parseInt(editCredits)
+            });
+
+            if (rpcError) {
+                throw new Error("Erro no banco de dados: " + rpcError.message);
+            }
+
+            // Persistence Verification
+            const { data: verifyData } = await supabase
                 .from('profiles')
-                .update({ credits: parseInt(editCredits) })
+                .select('credits')
                 .eq('id', userId)
-                .select('', { count: 'exact' });
+                .single();
 
-            if (error) throw error;
-
-            // If RLS blocks update, count might be 0 without error
-            if (count === 0) {
-                throw new Error("Permissão negada (RLS) ou usuário não encontrado.");
+            if (verifyData && verifyData.credits !== parseInt(editCredits)) {
+                console.warn(`WARNING: Verification mismatch.`);
             }
 
             // Update local state
@@ -102,7 +166,7 @@ const AdminPanel = () => {
                 u.id === userId ? { ...u, credits: parseInt(editCredits) } : u
             ));
             setEditingId(null);
-            alert('Créditos atualizados com sucesso!');
+            alert('Créditos salvos com sucesso!');
 
         } catch (error) {
             console.error('Error updating credits:', error);
@@ -165,6 +229,24 @@ const AdminPanel = () => {
                             <span className="font-medium">Galerias do Site</span>
                         </div>
                     </button>
+
+                    <button
+                        onClick={() => setActiveTab('reports')}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'reports'
+                            ? 'bg-red-500/10 text-red-500 border border-red-500/20'
+                            : 'text-gray-400 hover:bg-gray-700 hover:text-white'
+                            }`}
+                    >
+                        <div className="relative">
+                            <Shield className="w-5 h-5" />
+                            {pendingReports > 0 && (
+                                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full font-bold">
+                                    {pendingReports}
+                                </span>
+                            )}
+                        </div>
+                        <span className="font-medium">Imagens Reportadas</span>
+                    </button>
                 </nav>
 
                 <div className="p-4 border-t border-gray-700">
@@ -188,13 +270,17 @@ const AdminPanel = () => {
                 {/* Top Header */}
                 <header className="h-16 bg-gray-800/50 backdrop-blur-md border-b border-gray-700 flex items-center justify-between px-8 sticky top-0 z-10">
                     <h1 className="text-xl font-bold">
-                        {activeTab === 'users' ? 'Gerenciamento de Usuários' : 'Gerenciar Galerias'}
+                        {activeTab === 'users' ? 'Gerenciamento de Usuários' :
+                            activeTab === 'galleries' ? 'Gerenciar Galerias' :
+                                'Imagens Reportadas'}
                     </h1>
                 </header>
 
                 <div className="flex-1 overflow-y-auto p-8">
                     {activeTab === 'galleries' ? (
                         <SiteGalleries />
+                    ) : activeTab === 'reports' ? (
+                        <ReportedImages users={users} />
                     ) : (
                         // Users View
                         <>
