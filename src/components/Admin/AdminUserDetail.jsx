@@ -60,7 +60,7 @@ const AdminUserDetail = ({ user, onBack }) => {
     };
 
     // --- Features State ---
-    const ALL_FEATURES = ['product', 'food', 'fashion', 'optical', 'pet', 'auto', 'product_test'];
+    const ALL_FEATURES = ['product', 'food', 'fashion', 'optical', 'pet', 'auto'];
     const FEATURE_LABELS = {
         'product': 'Produto (Padrão)',
         'food': 'Food',
@@ -68,7 +68,7 @@ const AdminUserDetail = ({ user, onBack }) => {
         'optical': 'Ótica',
         'pet': 'Veterinário / Pet',
         'auto': 'Automóveis',
-        'product_test': 'Produto Teste'
+
     };
 
     const [allowedFeatures, setAllowedFeatures] = useState(user.allowed_features || ALL_FEATURES);
