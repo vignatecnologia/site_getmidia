@@ -40,8 +40,8 @@ const Comparison = () => {
                                 <span className="text-xl font-bold text-white">2 - 5 dias</span>
                             </div>
                             <div className="flex justify-between items-center pb-4 border-b border-gray-700">
-                                <span className="text-gray-400">Alterações</span>
-                                <span className="text-xl font-bold text-white">Limitadas / Pagas</span>
+                                <span className="text-gray-400">Disponibilidade</span>
+                                <span className="text-xl font-bold text-white">Horário Comercial</span>
                             </div>
 
                             <div className="pt-4">
@@ -79,8 +79,8 @@ const Comparison = () => {
                                 <span className="text-xl font-bold text-white">Segundos</span>
                             </div>
                             <div className="flex justify-between items-center pb-4 border-b border-primary/10">
-                                <span className="text-gray-300">Alterações</span>
-                                <span className="text-xl font-bold text-white">Ilimitadas</span>
+                                <span className="text-gray-300">Disponibilidade</span>
+                                <span className="text-xl font-bold text-white">24 horas</span>
                             </div>
 
                             <div className="pt-4">
