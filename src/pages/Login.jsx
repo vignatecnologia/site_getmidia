@@ -4,6 +4,8 @@ import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabaseClient'
 import { LogIn } from 'lucide-react'
 
+import logo from '../assets/logo_getmidia.png'
+
 const Login = () => {
   const [loading, setLoading] = useState(false)
   const [email, setEmail] = useState('')
@@ -42,8 +44,8 @@ const Login = () => {
       <div className="max-w-md w-full space-y-8 bg-gray-800 p-8 rounded-2xl border border-gray-700 shadow-2xl">
         <div className="text-center">
           <Link to="/" className="inline-block mb-6">
-            <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center mx-auto">
-              <span className="text-black font-bold text-2xl">G</span>
+            <div className="flex justify-center">
+              <img src={logo} alt="GetMidia" className="h-[90px] object-contain" />
             </div>
           </Link>
           <h2 className="text-3xl font-bold text-white">Bem-vindo de volta</h2>

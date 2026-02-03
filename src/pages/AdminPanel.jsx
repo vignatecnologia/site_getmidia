@@ -128,6 +128,145 @@ const AdminPanel = () => {
         (user.phone || '').includes(searchTerm)
     );
 
+    // Modal for Creating User
+    const CreateUserModal = ({ onClose, onCreated }) => {
+        const [formData, setFormData] = useState({
+            email: '',
+            password: '',
+            full_name: '',
+            phone: '',
+            cpf_cnpj: '',
+            credits: 0
+        });
+        const [creating, setCreating] = useState(false);
+
+        const handleSubmit = async (e) => {
+            e.preventDefault();
+            setCreating(true);
+            try {
+                // Determine function URL based on env
+                const PROJECT_REF = 'qyruweidqlqniqdatnxx';
+                const FUNCTION_URL = `https://${PROJECT_REF}.supabase.co/functions/v1/create-user`;
+
+                const { data: { session } } = await supabase.auth.getSession();
+                const token = session?.access_token;
+
+                const response = await fetch(FUNCTION_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+                        'X-Supabase-Auth': token
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Erro ao criar usuário');
+                }
+
+                alert('Usuário criado com sucesso!');
+                onCreated();
+                onClose();
+            } catch (error) {
+                console.error('Error creating user:', error);
+                alert('Erro ao criar usuário: ' + (error.message || 'Erro desconhecido'));
+            } finally {
+                setCreating(false);
+            }
+        };
+
+        return (
+            <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                <div className="bg-gray-800 rounded-xl p-6 w-full max-w-md border border-gray-700">
+                    <h3 className="text-xl font-bold text-white mb-4">Adicionar Novo Usuário</h3>
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <div>
+                            <label className="block text-xs text-gray-400 mb-1">Nome Completo</label>
+                            <input
+                                type="text"
+                                required
+                                className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2 text-white text-sm"
+                                value={formData.full_name}
+                                onChange={e => setFormData({ ...formData, full_name: e.target.value })}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs text-gray-400 mb-1">Email</label>
+                            <input
+                                type="email"
+                                required
+                                className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2 text-white text-sm"
+                                value={formData.email}
+                                onChange={e => setFormData({ ...formData, email: e.target.value })}
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs text-gray-400 mb-1">Senha</label>
+                            <input
+                                type="password"
+                                required
+                                minLength={6}
+                                className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2 text-white text-sm"
+                                value={formData.password}
+                                onChange={e => setFormData({ ...formData, password: e.target.value })}
+                            />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-xs text-gray-400 mb-1">Telefone</label>
+                                <input
+                                    type="text"
+                                    className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2 text-white text-sm"
+                                    value={formData.phone}
+                                    onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs text-gray-400 mb-1">CPF/CNPJ</label>
+                                <input
+                                    type="text"
+                                    className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2 text-white text-sm"
+                                    value={formData.cpf_cnpj}
+                                    onChange={e => setFormData({ ...formData, cpf_cnpj: e.target.value })}
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <label className="block text-xs text-gray-400 mb-1">Créditos Iniciais</label>
+                            <input
+                                type="number"
+                                className="w-full bg-gray-900 border border-gray-700 rounded-lg p-2 text-white text-sm"
+                                value={formData.credits}
+                                onChange={e => setFormData({ ...formData, credits: parseInt(e.target.value) || 0 })}
+                            />
+                        </div>
+
+                        <div className="flex gap-3 mt-6">
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="flex-1 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-600"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={creating}
+                                className="flex-1 py-2 bg-yellow-500 text-black font-bold rounded-lg hover:bg-yellow-400 disabled:opacity-50"
+                            >
+                                {creating ? 'Criando...' : 'Criar Usuário'}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        );
+    };
+
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
     if (loading) {
         return (
             <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">
@@ -242,12 +381,26 @@ const AdminPanel = () => {
                                 // Users View
                                 <>
                                     {/* Stats / Controls */}
+                                    {isCreateModalOpen && (
+                                        <CreateUserModal
+                                            onClose={() => setIsCreateModalOpen(false)}
+                                            onCreated={() => {
+                                                fetchUsers();
+                                            }}
+                                        />
+                                    )}
                                     <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-                                        <div className="flex items-center gap-2 text-gray-300">
+                                        <div className="flex items-center gap-4 text-gray-300">
                                             <div className="bg-gray-800 p-2 rounded-lg">
                                                 <Users className="w-5 h-5 text-primary" />
                                             </div>
                                             <span className="font-medium">{users.length} Usuários Cadastrados</span>
+                                            <button
+                                                onClick={() => setIsCreateModalOpen(true)}
+                                                className="bg-primary hover:bg-primary-hover text-black px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors ml-4"
+                                            >
+                                                Adicionar Usuário
+                                            </button>
                                         </div>
 
                                         <div className="relative w-full sm:w-64">
