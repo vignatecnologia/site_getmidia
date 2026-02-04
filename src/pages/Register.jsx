@@ -6,8 +6,10 @@ import { UserPlus } from 'lucide-react'
 
 const Register = () => {
     const [loading, setLoading] = useState(false)
+    const [fullName, setFullName] = useState('')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
+    const [confirmPassword, setConfirmPassword] = useState('')
     const [error, setError] = useState(null)
     const navigate = useNavigate()
 
@@ -16,13 +18,29 @@ const Register = () => {
         setLoading(true)
         setError(null)
 
+        if (password !== confirmPassword) {
+            setError('As senhas não coincidem.')
+            setLoading(false)
+            return
+        }
+
         try {
-            const { error } = await supabase.auth.signUp({
+            const { data, error: signUpError } = await supabase.auth.signUp({
                 email,
                 password,
+                options: {
+                    data: {
+                        full_name: fullName,
+                    },
+                },
             })
-            if (error) throw error
-            // Usually redirects to confirmation or logs in immediately if no confirmation required
+
+            if (signUpError) throw signUpError
+
+            // The 'profiles' trigger should handle the creation, but we send full_name in metadata.
+            // If we need to ensure profile update, we can do it here, but usually metadata syncs or trigger handles it.
+            // For now, let's assume trigger works. If not, we might need an explicit update.
+
             alert('Cadastro realizado! Verifique seu email para confirmar.')
             navigate('/login')
         } catch (error) {
@@ -37,9 +55,7 @@ const Register = () => {
             <div className="max-w-md w-full space-y-8 bg-gray-800 p-8 rounded-2xl border border-gray-700 shadow-2xl">
                 <div className="text-center">
                     <Link to="/" className="inline-block mb-6">
-                        <div className="w-12 h-12 bg-primary rounded-xl flex items-center justify-center mx-auto">
-                            <span className="text-black font-bold text-2xl">G</span>
-                        </div>
+                        <img src="/logo-new.png" alt="GetMídia Logo" className="h-[50px] w-auto mx-auto" />
                     </Link>
                     <h2 className="text-3xl font-bold text-white">Criar Conta</h2>
                     <p className="mt-2 text-gray-400">Comece a criar imagens incríveis hoje</p>
@@ -52,6 +68,18 @@ const Register = () => {
                 )}
 
                 <form className="space-y-6" onSubmit={handleRegister}>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Nome Completo</label>
+                        <input
+                            type="text"
+                            required
+                            className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            placeholder="Seu Nome"
+                            value={fullName}
+                            onChange={(e) => setFullName(e.target.value)}
+                        />
+                    </div>
+
                     <div>
                         <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
                         <input
@@ -73,6 +101,18 @@ const Register = () => {
                             placeholder="••••••••"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-300 mb-2">Confirmar Senha</label>
+                        <input
+                            type="password"
+                            required
+                            className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            placeholder="••••••••"
+                            value={confirmPassword}
+                            onChange={(e) => setConfirmPassword(e.target.value)}
                         />
                     </div>
 
