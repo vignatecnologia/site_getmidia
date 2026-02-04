@@ -14,6 +14,7 @@ import GetmidiaOtica from './pages/GetmidiaOtica'
 import GetmidiaPet from './pages/GetmidiaPet'
 import HowItWorks from './pages/HowItWorks'
 import { PaymentSuccess, PaymentFailure, PaymentPending } from './pages/PaymentReturn'
+import UserDashboard from './pages/UserDashboard'
 
 import { Toaster } from 'react-hot-toast'
 
@@ -44,6 +45,7 @@ function App() {
         <Route path="/payment-success" element={<PaymentSuccess />} />
         <Route path="/payment-failure" element={<PaymentFailure />} />
         <Route path="/payment-pending" element={<PaymentPending />} />
+        <Route path="/minha-conta" element={<UserDashboard />} />
       </Routes>
     </div>
   )

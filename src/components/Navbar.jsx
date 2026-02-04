@@ -55,9 +55,15 @@ const Navbar = () => {
                                     <span className="text-sm text-gray-300">
                                         Olá, {session.user.user_metadata?.full_name?.split(' ')[0] || 'Usuário'}
                                     </span>
+                                    <Link
+                                        to="/minha-conta"
+                                        className="bg-gray-800 border border-gray-700 hover:bg-gray-700 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                                    >
+                                        Minha Conta
+                                    </Link>
                                     <button
                                         onClick={handleLogout}
-                                        className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                                        className="text-red-400 hover:text-red-300 px-3 py-2 rounded-md text-sm font-medium transition-colors"
                                     >
                                         Sair
                                     </button>
@@ -92,7 +98,10 @@ const Navbar = () => {
                         <a href="#features" className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Recursos</a>
                         <a href="#pricing" className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Preços</a>
                         {session ? (
-                            <button onClick={handleLogout} className="text-gray-300 hover:text-white block w-full text-left px-3 py-2 rounded-md text-base font-medium">Sair</button>
+                            <>
+                                <Link to="/minha-conta" className="text-yellow-500 hover:text-yellow-400 block px-3 py-2 rounded-md text-base font-medium">Minha Conta</Link>
+                                <button onClick={handleLogout} className="text-red-400 hover:text-red-300 block w-full text-left px-3 py-2 rounded-md text-base font-medium">Sair</button>
+                            </>
                         ) : (
                             <>
                                 <Link to="/login" className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Entrar</Link>
