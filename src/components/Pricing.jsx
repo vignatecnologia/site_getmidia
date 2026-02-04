@@ -33,7 +33,14 @@ const Pricing = () => {
 
             if (error) throw error
 
+            console.log("Checkout response:", data);
+
             if (data?.init_point) {
+                // Always use init_point. If it's sandbox token, Mercado Pago returns the sandbox URL in init_point usually, 
+                // but sometimes sandbox_init_point is explicit.
+                // let's prefer sandbox_init_point if available and we are seemingly in a test mode? 
+                // Actually, MP logic is usually consistent: init_point respects the token environment.
+                // But let's check if sandbox_init_point is different.
                 window.location.href = data.init_point
             } else {
                 throw new Error("Link de pagamento não retornado.")
