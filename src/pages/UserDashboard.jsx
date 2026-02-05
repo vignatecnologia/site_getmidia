@@ -16,36 +16,42 @@ const UserDashboard = () => {
 
     useEffect(() => {
         const getProfile = async () => {
-            const { data: { session: currentSession } } = await supabase.auth.getSession();
-            setSession(currentSession); // Need to store this to use in handlers
+            try {
+                const { data: { session: currentSession } } = await supabase.auth.getSession();
+                setSession(currentSession); // Need to store this to use in handlers
 
-            if (!currentSession) {
-                navigate('/login');
-                return;
+                if (!currentSession) {
+                    navigate('/login');
+                    return;
+                }
+
+                const { data, error } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', currentSession.user.id) // Use currentSession instead of session state
+                    .single();
+
+                if (error) {
+                    console.warn('Profile fetch error:', error.message);
+
+                    // Fallback for display if profile is missing or error
+                    setProfile({
+                        email: currentSession.user.email,
+                        full_name: currentSession.user.user_metadata?.full_name || ''
+                    });
+                    setNewName(currentSession.user.user_metadata?.full_name || '');
+                } else {
+                    // Determine email: Profile email > Session email (fallback since profile might not have email col)
+                    const email = currentSession.user.email;
+                    setProfile({ ...data, email });
+                    setNewName(data.full_name || '');
+                }
+            } catch (error) {
+                console.error("Unexpected error loading dashboard:", error);
+                toast.error("Erro ao carregar dados do usuário.");
+            } finally {
+                setLoading(false);
             }
-
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', session.user.id)
-                .single();
-
-            if (error) {
-                console.warn('Profile fetch error:', error.message);
-
-                // Fallback for display if profile is missing or error
-                setProfile({
-                    email: session.user.email,
-                    full_name: session.user.user_metadata?.full_name || ''
-                });
-                setNewName(session.user.user_metadata?.full_name || '');
-            } else {
-                // Determine email: Profile email > Session email (fallback since profile might not have email col)
-                const email = session.user.email;
-                setProfile({ ...data, email });
-                setNewName(data.full_name || '');
-            }
-            setLoading(false);
         };
 
         getProfile();

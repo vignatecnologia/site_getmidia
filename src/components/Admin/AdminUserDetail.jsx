@@ -9,7 +9,7 @@ import ConfirmationModal from '../ConfirmationModal';
 const AdminUserDetail = ({ user, onBack }) => {
     if (!user) return null;
 
-    const [activeTab, setActiveTab] = useState('plan'); // 'plan', 'store', 'logo'
+    const [activeTab, setActiveTab] = useState('plan'); // 'plan', 'store', 'logo', 'security'
     const [loading, setLoading] = useState(false);
     const [credits, setCredits] = useState(user.credits || 0);
 
@@ -713,6 +713,12 @@ const AdminUserDetail = ({ user, onBack }) => {
                 >
                     Financeiro
                 </button>
+                <button
+                    onClick={() => setActiveTab('security')}
+                    className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${activeTab === 'security' ? 'border-primary text-primary' : 'border-transparent text-gray-400 hover:text-white'}`}
+                >
+                    Segurança
+                </button>
             </div>
 
             {/* Content Area */}
@@ -818,6 +824,8 @@ const AdminUserDetail = ({ user, onBack }) => {
                                                 const FUNCTION_URL = `https://${PROJECT_REF}.supabase.co/functions/v1/delete-user`;
                                                 const { data: { session } } = await supabase.auth.getSession();
 
+                                                console.log("Attempting to delete user:", user.id);
+
                                                 const response = await fetch(FUNCTION_URL, {
                                                     method: 'POST',
                                                     headers: {
@@ -827,16 +835,26 @@ const AdminUserDetail = ({ user, onBack }) => {
                                                     body: JSON.stringify({ user_id: user.id })
                                                 });
 
+                                                const respText = await response.text();
+                                                console.log("Delete response status:", response.status);
+                                                console.log("Delete response body:", respText);
+
+                                                let errData = {};
+                                                try {
+                                                    errData = JSON.parse(respText);
+                                                } catch (e) {
+                                                    errData = { error: respText || "Unknown error" };
+                                                }
+
                                                 if (!response.ok) {
-                                                    const errData = await response.json();
-                                                    throw new Error(errData.error || "Falha ao excluir");
+                                                    throw new Error(errData.error || `Erro ${response.status}: ${respText}`);
                                                 }
 
                                                 toast.success("Usuário excluído com sucesso.");
                                                 onBack(); // Go back to list
                                             } catch (error) {
-                                                console.error(error);
-                                                toast.error(`Erro ao excluir: ${error.message}`);
+                                                console.error("Delete user error:", error);
+                                                toast.error(`Falha: ${error.message}`);
                                             } finally {
                                                 if (isMounted.current) setLoading(false);
                                             }
@@ -1007,6 +1025,85 @@ const AdminUserDetail = ({ user, onBack }) => {
                                             )}
                                         </tbody>
                                     </table>
+                                </div>
+                            </section>
+                        </div>
+                    )
+                }
+
+                {/* --- SECURITY TAB --- */}
+                {
+                    activeTab === 'security' && (
+                        <div className="max-w-2xl space-y-6">
+                            <section className="bg-gray-800 rounded-xl p-6 border border-gray-700">
+                                <h3 className="text-white font-bold mb-4 flex items-center gap-2">
+                                    <Lock className="w-5 h-5 text-red-500" />
+                                    Alterar Senha do Usuário
+                                </h3>
+                                <div className="space-y-4">
+                                    <p className="text-sm text-gray-400">
+                                        Defina uma nova senha para o usuário. Essa ação é imediata e invalidará a sessão atual do usuário se ele estiver logado.
+                                    </p>
+                                    <form onSubmit={async (e) => {
+                                        e.preventDefault();
+                                        const newPass = e.target.newPassword.value;
+                                        if (!newPass || newPass.length < 6) {
+                                            toast.error('A senha deve ter pelo menos 6 caracteres.');
+                                            return;
+                                        }
+
+                                        openModal({
+                                            title: 'Alterar Senha',
+                                            message: 'Tem certeza que deseja alterar a senha deste usuário?',
+                                            type: 'warning',
+                                            onConfirm: async () => {
+                                                setLoading(true);
+                                                try {
+                                                    const PROJECT_REF = 'qyruweidqlqniqdatnxx'; // Should ideally be in env but hardcoded in other places
+                                                    const FUNCTION_URL = `https://${PROJECT_REF}.supabase.co/functions/v1/update-user`;
+                                                    const { data: { session } } = await supabase.auth.getSession();
+
+                                                    const response = await fetch(FUNCTION_URL, {
+                                                        method: 'POST',
+                                                        headers: {
+                                                            'Content-Type': 'application/json',
+                                                            'Authorization': `Bearer ${session.access_token}`
+                                                        },
+                                                        body: JSON.stringify({ user_id: user.id, password: newPass })
+                                                    });
+
+                                                    if (!response.ok) {
+                                                        const errData = await response.json();
+                                                        throw new Error(errData.error || "Falha ao atualizar senha");
+                                                    }
+
+                                                    toast.success("Senha alterada com sucesso!");
+                                                    e.target.reset();
+                                                } catch (error) {
+                                                    console.error(error);
+                                                    toast.error(`Erro: ${error.message}`);
+                                                } finally {
+                                                    if (isMounted.current) setLoading(false);
+                                                }
+                                            }
+                                        });
+                                    }}>
+                                        <div className="flex gap-2">
+                                            <input
+                                                name="newPassword"
+                                                type="text"
+                                                placeholder="Nova senha (mín. 6 caracteres)"
+                                                className="flex-1 bg-gray-900 border border-gray-600 rounded-lg px-4 py-2 text-white outline-none focus:border-red-500"
+                                            />
+                                            <button
+                                                type="submit"
+                                                disabled={loading}
+                                                className="px-6 py-2 bg-red-600 hover:bg-red-500 text-white rounded-lg font-bold transition-colors disabled:opacity-50"
+                                            >
+                                                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Salvar Senha'}
+                                            </button>
+                                        </div>
+                                    </form>
                                 </div>
                             </section>
                         </div>
