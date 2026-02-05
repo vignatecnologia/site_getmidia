@@ -27,10 +27,11 @@ const Login = () => {
       // Redirect to app or dashboard?
       // Since specific requirement is "user accesses app with login", maybe we just redirect to home or show success?
       // For now, redirect to Home.
-      if (data.user && data.user.email === 'vignatecnologia@gmail.com') {
+      const admins = ['vignatecnologia@gmail.com', 'projeto.getmidia@gmail.com'];
+      if (data.user && admins.includes(data.user.email)) {
         navigate('/admin')
       } else {
-        navigate('/')
+        navigate('/minha-conta')
       }
     } catch (error) {
       setError(error.message)

@@ -1,10 +1,99 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
-import { Users, Shield, LogOut, Search, Image, Edit2, Coins, Eye } from 'lucide-react';
+import { Users, Shield, LogOut, Search, Image, Edit2, Coins, Eye, Ticket as TicketIcon } from 'lucide-react';
 import SiteGalleries from '../components/Admin/SiteGalleries';
 import ReportedImages from '../components/Admin/ReportedImages';
 import AdminUserDetail from '../components/Admin/AdminUserDetail';
+import toast from 'react-hot-toast';
+
+const TicketsTab = ({ users }) => {
+    const [tickets, setTickets] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    const fetchTickets = async () => {
+        setIsLoading(true);
+        const { data, error } = await supabase
+            .from('tickets')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            console.error(error);
+            toast.error("Erro ao buscar tickets");
+        } else {
+            setTickets(data);
+        }
+        setIsLoading(false);
+    };
+
+    useEffect(() => {
+        fetchTickets();
+    }, []);
+
+    const handleResolve = async (id) => {
+        if (!window.confirm("Marcar como resolvido?")) return;
+        const { error } = await supabase.from('tickets').update({ status: 'resolved' }).eq('id', id);
+        if (error) toast.error("Erro ao atualizar");
+        else {
+            toast.success("Ticket resolvido!");
+            fetchTickets();
+        }
+    };
+
+    const getUserName = (uid) => {
+        const u = users.find(x => x.id === uid);
+        return u ? `${u.full_name} (${u.email})` : uid;
+    };
+
+    if (isLoading) return <div className="p-8 text-center text-gray-400">Carregando solicitações...</div>;
+
+    return (
+        <div className="bg-gray-800 rounded-xl border border-gray-700 overflow-hidden shadow-xl m-8">
+            <table className="w-full text-left border-collapse">
+                <thead>
+                    <tr className="bg-gray-700/50 text-gray-400 text-xs uppercase tracking-wider">
+                        <th className="p-4">Data</th>
+                        <th className="p-4">Usuário</th>
+                        <th className="p-4">Tipo</th>
+                        <th className="p-4">Descrição</th>
+                        <th className="p-4">Status</th>
+                        <th className="p-4 text-center">Ações</th>
+                    </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-700">
+                    {tickets.map(t => (
+                        <tr key={t.id} className="hover:bg-gray-700/30">
+                            <td className="p-4 text-sm text-gray-400">{new Date(t.created_at).toLocaleDateString()}</td>
+                            <td className="p-4 text-white font-medium">{getUserName(t.user_id)}</td>
+                            <td className="p-4 text-sm uppercase">{t.type}</td>
+                            <td className="p-4 text-sm text-gray-300">{t.description}</td>
+                            <td className="p-4">
+                                <span className={`px-2 py-1 rounded text-xs font-bold uppercase ${t.status === 'open' ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400'
+                                    }`}>
+                                    {t.status}
+                                </span>
+                            </td>
+                            <td className="p-4 text-center">
+                                {t.status === 'open' && (
+                                    <button
+                                        onClick={() => handleResolve(t.id)}
+                                        className="text-xs bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded transition-colors"
+                                    >
+                                        Resolver
+                                    </button>
+                                )}
+                            </td>
+                        </tr>
+                    ))}
+                    {tickets.length === 0 && (
+                        <tr><td colSpan="6" className="p-8 text-center text-gray-500">Nenhuma solicitação encontrada.</td></tr>
+                    )}
+                </tbody>
+            </table>
+        </div>
+    );
+};
 
 const AdminPanel = () => {
     const [users, setUsers] = useState([]);
@@ -329,7 +418,19 @@ const AdminPanel = () => {
                         </div>
                         <span className="font-medium">Imagens Reportadas</span>
                     </button>
+
+                    <button
+                        onClick={() => { setActiveTab('tickets'); setSelectedUser(null); }}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'tickets'
+                            ? 'bg-blue-500/10 text-blue-500 border border-blue-500/20'
+                            : 'text-gray-400 hover:bg-gray-700 hover:text-white'
+                            }`}
+                    >
+                        <TicketIcon className="w-5 h-5" />
+                        <span className="font-medium">Solicitações</span>
+                    </button>
                 </nav>
+
 
                 <div className="p-4 border-t border-gray-700">
                     <div className="px-4 py-2 mb-2">
@@ -377,6 +478,8 @@ const AdminPanel = () => {
                                 <SiteGalleries />
                             ) : activeTab === 'reports' ? (
                                 <ReportedImages users={users} />
+                            ) : activeTab === 'tickets' ? (
+                                <TicketsTab users={users} />
                             ) : (
                                 // Users View
                                 <>

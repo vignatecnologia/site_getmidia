@@ -2,19 +2,24 @@ import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { useNavigate, Link } from 'react-router-dom';
 import { Coins, User, CreditCard, Calendar, LogOut } from 'lucide-react';
-import { Navbar } from '../components/Navbar'; // Adjust import if necessary
+import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import { toast } from 'react-hot-toast';
 
 const UserDashboard = () => {
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [isEditingName, setIsEditingName] = useState(false);
+    const [newName, setNewName] = useState('');
+    const [session, setSession] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
         const getProfile = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
+            const { data: { session: currentSession } } = await supabase.auth.getSession();
+            setSession(currentSession); // Need to store this to use in handlers
 
-            if (!session) {
+            if (!currentSession) {
                 navigate('/login');
                 return;
             }
@@ -26,9 +31,19 @@ const UserDashboard = () => {
                 .single();
 
             if (error) {
-                console.error('Error fetching profile:', error);
+                console.warn('Profile fetch error:', error.message);
+
+                // Fallback for display if profile is missing or error
+                setProfile({
+                    email: session.user.email,
+                    full_name: session.user.user_metadata?.full_name || ''
+                });
+                setNewName(session.user.user_metadata?.full_name || '');
             } else {
-                setProfile(data);
+                // Determine email: Profile email > Session email (fallback since profile might not have email col)
+                const email = session.user.email;
+                setProfile({ ...data, email });
+                setNewName(data.full_name || '');
             }
             setLoading(false);
         };
@@ -39,6 +54,46 @@ const UserDashboard = () => {
     const handleLogout = async () => {
         await supabase.auth.signOut();
         navigate('/');
+    };
+
+    const handleUpdateName = async () => {
+        if (!newName.trim()) return;
+
+        const updateToast = toast.loading('Atualizando nome...');
+
+        try {
+            // Get session to ensure we have the ID
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) throw new Error("Sessão inválida. Faça login novamente.");
+
+            const updates = {
+                id: session.user.id, // ID is required for upsert to know which row to target/create
+                full_name: newName,
+                updated_at: new Date(),
+            };
+
+            // Use upsert() to handle both "update existing" and "create new" scenarios.
+            // crucially, we do NOT include 'email' as that column does not exist.
+            const { data, error } = await supabase
+                .from('profiles')
+                .upsert(updates)
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            setProfile(prev => ({ ...prev, full_name: newName }));
+            setIsEditingName(false);
+            toast.success('Nome atualizado com sucesso!', { id: updateToast });
+        } catch (error) {
+            console.error("Error updating name:", error);
+
+            // Helpful error mapping
+            let msg = error.message;
+            if (msg?.includes('row level security')) msg = 'Erro de permissão (RLS). Contate o suporte.';
+
+            toast.error(`Erro: ${msg || 'Falha ao atualizar'}`, { id: updateToast });
+        }
     };
 
     if (loading) {
@@ -59,7 +114,7 @@ const UserDashboard = () => {
             case 'essential': return 'Plano Essencial';
             case 'advanced': return 'Plano Avançado';
             case 'professional': return 'Plano Profissional';
-            default: return 'Plano Gratuito / Nenhum';
+            default: return 'Nenhum';
         }
     };
 
@@ -68,8 +123,8 @@ const UserDashboard = () => {
             {/* Simple Navbar for Dashboard */}
             <nav className="fixed w-full z-50 bg-gray-900/80 backdrop-blur-md border-b border-white/10">
                 <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-                    <Link to="/" className="text-2xl font-bold bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
-                        GetMídia
+                    <Link to="/" className="flex items-center gap-2">
+                        <img src="/logo-new.png" alt="GetMídia Logo" className="h-[40px] w-auto" />
                     </Link>
                     <button
                         onClick={handleLogout}
@@ -99,8 +154,24 @@ const UserDashboard = () => {
 
                         <div className="space-y-4">
                             <div>
-                                <label className="text-xs text-gray-500 uppercase tracking-wider">Nome</label>
-                                <p className="font-medium text-lg">{profile?.full_name || 'Usuário'}</p>
+                                <label className="text-xs text-gray-500 uppercase tracking-wider block mb-1">Nome</label>
+                                {isEditingName ? (
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={newName}
+                                            onChange={(e) => setNewName(e.target.value)}
+                                            className="bg-gray-900 border border-gray-700 rounded px-3 py-1 text-white flex-1"
+                                        />
+                                        <button onClick={handleUpdateName} className="text-green-400 font-bold hover:text-green-300">Salvar</button>
+                                        <button onClick={() => setIsEditingName(false)} className="text-gray-500 hover:text-gray-400">Cancelar</button>
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center gap-2">
+                                        <p className="font-medium text-lg">{profile?.full_name || 'Usuário'}</p>
+                                        <button onClick={() => setIsEditingName(true)} className="text-xs text-yellow-500 hover:underline">Editar</button>
+                                    </div>
+                                )}
                             </div>
                             <div>
                                 <label className="text-xs text-gray-500 uppercase tracking-wider">Email</label>
@@ -163,13 +234,40 @@ const UserDashboard = () => {
 
                             {/* Status Indicator */}
                             <div className="pt-4 border-t border-gray-700 flex justify-between items-center">
-                                <span className="text-sm text-gray-400">Status</span>
-                                <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${profile?.subscription_status === 'active'
+                                <div>
+                                    <span className="text-sm text-gray-400 block mb-1">Status</span>
+                                    <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${profile?.subscription_status === 'active'
                                         ? 'bg-green-500/20 text-green-400 border border-green-500/30'
                                         : 'bg-gray-700 text-gray-400'
-                                    }`}>
-                                    {profile?.subscription_status === 'active' ? 'Ativo' : 'Inativo'}
-                                </span>
+                                        }`}>
+                                        {profile?.subscription_status === 'active' ? 'Ativo' : 'Inativo'}
+                                    </span>
+                                </div>
+
+                                {profile?.subscription_status === 'active' && (
+                                    <button
+                                        onClick={async () => {
+                                            if (!window.confirm("Deseja realmente cancelar sua assinatura?")) return;
+                                            const tToast = toast.loading("Enviando solicitação...");
+                                            try {
+                                                const { error } = await supabase.from('tickets').insert({
+                                                    user_id: session.user.id,
+                                                    type: 'cancellation',
+                                                    status: 'open',
+                                                    description: 'Solicitação de cancelamento enviada pelo usuário via painel.'
+                                                });
+                                                if (error) throw error;
+                                                toast.success("Seu pedido de cancelamento foi enviado com sucesso! Aguarde o email de confirmação.", { id: tToast, duration: 5000 });
+                                            } catch (e) {
+                                                console.error(e);
+                                                toast.error("Erro ao enviar solicitação.", { id: tToast });
+                                            }
+                                        }}
+                                        className="text-xs text-red-400 hover:text-red-300 hover:underline"
+                                    >
+                                        Cancelar Assinatura
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>
