@@ -181,6 +181,13 @@ const AdminPanel = () => {
                         full_name: profile ? profile.full_name : u.full_name,
                         phone: profile ? profile.phone : u.phone,
                         cpf_cnpj: profile ? profile.cpf_cnpj : u.cpf_cnpj,
+                        plan: profile ? profile.plan : u.plan,
+                        allowed_features: profile ? profile.allowed_features : u.allowed_features,
+                        whatsapp: profile ? profile.whatsapp : u.whatsapp,
+                        subscription_status: profile ? profile.subscription_status : u.subscription_status,
+                        subscription_start: profile ? profile.subscription_start : u.subscription_start,
+                        current_period_end: profile ? profile.current_period_end : u.current_period_end,
+                        payment_method: profile ? profile.payment_method : u.payment_method,
                     };
                 });
             } else if (profilesData) {

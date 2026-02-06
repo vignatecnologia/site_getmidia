@@ -51,7 +51,7 @@ const AdminUserDetail = ({ user, onBack }) => {
     const [whatsapp, setWhatsapp] = useState(user.whatsapp || '');
 
     // --- Plan State ---
-    const [plan, setPlan] = useState(user.plan || 'testando');
+    const [plan, setPlan] = useState((user.plan || 'testando').toLowerCase());
     const PLAN_LIMITS = {
         'testando': 50,
         'essencial': 80,
@@ -60,7 +60,7 @@ const AdminUserDetail = ({ user, onBack }) => {
     };
 
     // --- Features State ---
-    const ALL_FEATURES = ['product', 'food', 'fashion', 'optical', 'pet', 'auto'];
+    const ALL_FEATURES = ['product', 'food', 'fashion', 'optical', 'pet', 'auto', 'farma'];
     const FEATURE_LABELS = {
         'product': 'Produto (Padrão)',
         'food': 'Food',
@@ -68,7 +68,7 @@ const AdminUserDetail = ({ user, onBack }) => {
         'optical': 'Ótica',
         'pet': 'Veterinário / Pet',
         'auto': 'Automóveis',
-
+        'farma': 'Farma',
     };
 
     const [allowedFeatures, setAllowedFeatures] = useState(user.allowed_features || ALL_FEATURES);
