@@ -55,12 +55,12 @@ const Pricing = () => {
         {
             id: 'essential',
             name: 'Plano Essencial',
-            price: 'R$125,00',
+            price: 'R$89,90',
             period: '/mês',
             credits: '80 Créditos',
             features: [
                 'Gerar imagem: Somente do Produto',
-                'Gerar imagem: Produto + Personagem',
+                'Gerar imagem: Produto + Modelo',
                 'Logotipo da empresa',
                 'Edição dos textos fácil',
                 'Alta Resolução das imagens',
@@ -74,12 +74,12 @@ const Pricing = () => {
         {
             id: 'advanced',
             name: 'Plano Avançado',
-            price: 'R$175,00',
+            price: 'R$129,90',
             period: '/mês',
             credits: '120 Créditos',
             features: [
                 'Gerar imagem: Somente do Produto',
-                'Gerar imagem: Produto + Personagem',
+                'Gerar imagem: Produto + Modelo',
                 'Logotipo da empresa',
                 'Edição dos textos fácil',
                 'Alta Resolução das imagens',
@@ -93,12 +93,12 @@ const Pricing = () => {
         {
             id: 'professional',
             name: 'Plano Profissional',
-            price: 'R$255,00',
+            price: 'R$189,90',
             period: '/mês',
             credits: '200 Créditos',
             features: [
                 'Gerar imagem: Somente do Produto',
-                'Gerar imagem: Produto + Personagem',
+                'Gerar imagem: Produto + Modelo',
                 'Logotipo da empresa',
                 'Edição dos textos fácil',
                 'Alta Resolução das imagens',

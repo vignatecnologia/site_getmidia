@@ -12,9 +12,11 @@ import GetmidiaFood from './pages/GetmidiaFood'
 import GetmidiaAuto from './pages/GetmidiaAuto'
 import GetmidiaOtica from './pages/GetmidiaOtica'
 import GetmidiaPet from './pages/GetmidiaPet'
+import GetmidiaFarma from './pages/GetmidiaFarma'
 import HowItWorks from './pages/HowItWorks'
 import { PaymentSuccess, PaymentFailure, PaymentPending } from './pages/PaymentReturn'
 import UserDashboard from './pages/UserDashboard'
+import ScrollToTop from './components/ScrollToTop'
 
 import { Toaster } from 'react-hot-toast'
 
@@ -27,6 +29,7 @@ function App() {
           color: '#fff',
         },
       }} />
+      <ScrollToTop />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/preview" element={<LandingPage />} />
@@ -36,6 +39,7 @@ function App() {
         <Route path="/auto" element={<GetmidiaAuto />} />
         <Route path="/otica" element={<GetmidiaOtica />} />
         <Route path="/pet" element={<GetmidiaPet />} />
+        <Route path="/farma" element={<GetmidiaFarma />} />
         <Route path="/como-funciona" element={<HowItWorks />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />

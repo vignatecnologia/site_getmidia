@@ -1,7 +1,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { ArrowRight, Clock, Box, Shirt, Utensils, Car, Glasses, PawPrint } from 'lucide-react'
+import { ArrowRight, Clock, Box, Shirt, Utensils, Car, Glasses, PawPrint, Pill } from 'lucide-react'
 
 const solutions = [
     {
@@ -69,6 +69,17 @@ const solutions = [
         bg: 'bg-green-500/10',
         border: 'border-green-500/20',
         icon: <PawPrint className="w-6 h-6" />
+    },
+    {
+        id: 'farma',
+        name: 'GetMídia Farma',
+        logo: '/logos/logo-farma-v2.png',
+        description: 'Crie fotos publicitárias de medicamentos e produtos de higiene com resultados de estúdio.',
+        status: 'active',
+        color: 'text-orange-500',
+        bg: 'bg-orange-500/10',
+        border: 'border-orange-500/20',
+        icon: <Pill className="w-6 h-6" />
     }
 ]
 
