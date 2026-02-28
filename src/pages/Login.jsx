@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabaseClient'
+import { apiClient } from '../lib/apiClient'
 import { LogIn } from 'lucide-react'
 
 import logo from '../assets/logo_getmidia.png'
@@ -19,16 +19,17 @@ const Login = () => {
     setError(null)
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
+      const { data } = await apiClient.post('/auth/login', {
         email,
         password,
       })
-      if (error) throw error
-      // Redirect to app or dashboard?
-      // Since specific requirement is "user accesses app with login", maybe we just redirect to home or show success?
-      // For now, redirect to Home.
+
+      const { user, token } = data;
+      localStorage.setItem('getmidia_token', token);
+      localStorage.setItem('getmidia_user', JSON.stringify(user));
+
       const admins = ['vignatecnologia@gmail.com', 'projeto.getmidia@gmail.com'];
-      if (data.user && admins.includes(data.user.email)) {
+      if (user && admins.includes(user.email)) {
         navigate('/admin')
       } else {
         navigate('/minha-conta')

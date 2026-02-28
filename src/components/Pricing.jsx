@@ -1,10 +1,8 @@
 
 import React from 'react'
-import { Check, Star, Zap, Crown, Coins } from 'lucide-react'
-import { Link, useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabaseClient'
+import { apiClient } from '../lib/apiClient'
 import { useState, useEffect } from 'react'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Check, Star, Zap, Crown, Coins } from 'lucide-react'
 
 const Pricing = () => {
     const [loadingPlan, setLoadingPlan] = useState(null)
@@ -13,9 +11,10 @@ const Pricing = () => {
     const navigate = useNavigate()
 
     useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setSession(session)
-        })
+        const user = localStorage.getItem('getmidia_user');
+        if (user) {
+            setSession(JSON.parse(user));
+        }
     }, [])
 
     const handleSubscribe = async (planId) => {
@@ -27,18 +26,11 @@ const Pricing = () => {
 
         try {
             setLoadingPlan(planId)
-            const { data, error } = await supabase.functions.invoke('create-checkout', {
-                body: { planId }
-            })
+            const { data } = await apiClient.post('/api/payments/create-checkout', {
+                planId
+            });
 
-            if (error) throw error
-
-            console.log("Checkout response:", data);
-
-            if (data?.url) {
-                window.location.href = data.url
-            } else if (data?.init_point) {
-                // Fallback
+            if (data?.init_point) {
                 window.location.href = data.init_point
             } else {
                 throw new Error("Link de pagamento não retornado.")

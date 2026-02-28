@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { apiClient } from '../lib/apiClient';
 import { useNavigate, Link } from 'react-router-dom';
 import { Coins, User, CreditCard, Calendar, LogOut } from 'lucide-react';
 import Navbar from '../components/Navbar';
@@ -17,38 +17,19 @@ const UserDashboard = () => {
     useEffect(() => {
         const getProfile = async () => {
             try {
-                const { data: { session: currentSession } } = await supabase.auth.getSession();
-                setSession(currentSession); // Need to store this to use in handlers
-
-                if (!currentSession) {
+                const userData = JSON.parse(localStorage.getItem('getmidia_user'));
+                if (!userData) {
                     navigate('/login');
                     return;
                 }
 
-                const { data, error } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', currentSession.user.id) // Use currentSession instead of session state
-                    .single();
-
-                if (error) {
-                    console.warn('Profile fetch error:', error.message);
-
-                    // Fallback for display if profile is missing or error
-                    setProfile({
-                        email: currentSession.user.email,
-                        full_name: currentSession.user.user_metadata?.full_name || ''
-                    });
-                    setNewName(currentSession.user.user_metadata?.full_name || '');
-                } else {
-                    // Determine email: Profile email > Session email (fallback since profile might not have email col)
-                    const email = currentSession.user.email;
-                    setProfile({ ...data, email });
-                    setNewName(data.full_name || '');
-                }
+                const { data } = await apiClient.get('/api/profiles/me');
+                setProfile({ ...data, email: userData.email });
+                setNewName(data.full_name || '');
             } catch (error) {
                 console.error("Unexpected error loading dashboard:", error);
                 toast.error("Erro ao carregar dados do usuário.");
+                navigate('/login');
             } finally {
                 setLoading(false);
             }
@@ -57,8 +38,10 @@ const UserDashboard = () => {
         getProfile();
     }, [navigate]);
 
-    const handleLogout = async () => {
-        await supabase.auth.signOut();
+    const handleLogout = () => {
+        localStorage.removeItem('getmidia_token');
+        localStorage.removeItem('getmidia_user');
+        window.dispatchEvent(new Event('storage'));
         navigate('/');
     };
 
@@ -68,37 +51,16 @@ const UserDashboard = () => {
         const updateToast = toast.loading('Atualizando nome...');
 
         try {
-            // Get session to ensure we have the ID
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) throw new Error("Sessão inválida. Faça login novamente.");
-
-            const updates = {
-                id: session.user.id, // ID is required for upsert to know which row to target/create
-                full_name: newName,
-                updated_at: new Date(),
-            };
-
-            // Use upsert() to handle both "update existing" and "create new" scenarios.
-            // crucially, we do NOT include 'email' as that column does not exist.
-            const { data, error } = await supabase
-                .from('profiles')
-                .upsert(updates)
-                .select()
-                .single();
-
-            if (error) throw error;
+            await apiClient.patch('/api/profiles/me', {
+                full_name: newName
+            });
 
             setProfile(prev => ({ ...prev, full_name: newName }));
             setIsEditingName(false);
             toast.success('Nome atualizado com sucesso!', { id: updateToast });
         } catch (error) {
             console.error("Error updating name:", error);
-
-            // Helpful error mapping
-            let msg = error.message;
-            if (msg?.includes('row level security')) msg = 'Erro de permissão (RLS). Contate o suporte.';
-
-            toast.error(`Erro: ${msg || 'Falha ao atualizar'}`, { id: updateToast });
+            toast.error(`Erro ao atualizar nome`, { id: updateToast });
         }
     };
 
@@ -231,8 +193,8 @@ const UserDashboard = () => {
                                     <label className="text-xs text-gray-500 uppercase tracking-wider">Validade</label>
                                     <div className="flex items-center gap-2 mt-1">
                                         <Calendar className="w-4 h-4 text-gray-400" />
-                                        <span className={new Date(profile?.subscription_end) < new Date() ? 'text-red-400' : 'text-green-400'}>
-                                            {formatDate(profile?.subscription_end)}
+                                        <span className={new Date(profile?.current_period_end) < new Date() ? 'text-red-400' : 'text-green-400'}>
+                                            {formatDate(profile?.current_period_end)}
                                         </span>
                                     </div>
                                 </div>
@@ -256,13 +218,10 @@ const UserDashboard = () => {
                                             if (!window.confirm("Deseja realmente cancelar sua assinatura?")) return;
                                             const tToast = toast.loading("Enviando solicitação...");
                                             try {
-                                                const { error } = await supabase.from('tickets').insert({
-                                                    user_id: session.user.id,
+                                                await apiClient.post('/api/tickets/create', {
                                                     type: 'cancellation',
-                                                    status: 'open',
                                                     description: 'Solicitação de cancelamento enviada pelo usuário via painel.'
                                                 });
-                                                if (error) throw error;
                                                 toast.success("Seu pedido de cancelamento foi enviado com sucesso! Aguarde o email de confirmação.", { id: tToast, duration: 5000 });
                                             } catch (e) {
                                                 console.error(e);

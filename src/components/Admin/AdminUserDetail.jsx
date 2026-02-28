@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowLeft, Coins, Save, Check, X, Image as ImageIcon, Store, Trash2, Plus, Upload, ZoomIn, ZoomOut, Loader2, Lock } from 'lucide-react';
-import { supabase } from '../../lib/supabaseClient';
+import { apiClient } from '../../lib/apiClient';
 import Cropper from 'react-easy-crop';
 import { getCroppedImg } from '../../lib/cropUtils';
 import toast from 'react-hot-toast';
@@ -86,12 +86,9 @@ const AdminUserDetail = ({ user, onBack }) => {
     const handleSaveFeatures = async () => {
         setLoading(true);
         try {
-            const { error } = await supabase
-                .from('profiles')
-                .update({ allowed_features: allowedFeatures })
-                .eq('id', user.id);
-
-            if (error) throw error;
+            await apiClient.patch(`/api/profiles/admin/profile/${user.id}`, {
+                allowed_features: allowedFeatures
+            });
             toast.success('Permissões de acesso atualizadas!');
         } catch (error) {
             console.error(error);
@@ -110,13 +107,9 @@ const AdminUserDetail = ({ user, onBack }) => {
             onConfirm: async () => {
                 setLoading(true);
                 try {
-                    // Update plan in DB
-                    const { error } = await supabase
-                        .from('profiles')
-                        .update({ plan: newPlan })
-                        .eq('id', user.id);
-
-                    if (error) throw error;
+                    await apiClient.patch(`/api/profiles/admin/profile/${user.id}`, {
+                        plan: newPlan
+                    });
 
                     setPlan(newPlan);
 
@@ -126,13 +119,16 @@ const AdminUserDetail = ({ user, onBack }) => {
                         message: `Deseja atualizar o saldo de créditos do usuário para ${PLAN_LIMITS[newPlan]} (Valor do plano)?`,
                         type: 'info',
                         onConfirm: async () => {
-                            const { error: creditError } = await supabase.rpc('update_user_credits_sys', {
-                                target_user_id: user.id,
-                                new_credits: PLAN_LIMITS[newPlan]
-                            });
-                            if (creditError) throw creditError;
-                            setCredits(PLAN_LIMITS[newPlan]);
-                            toast.success('Plano e créditos atualizados!');
+                            try {
+                                await apiClient.post('/api/profiles/admin/update-credits', {
+                                    userId: user.id,
+                                    credits: PLAN_LIMITS[newPlan]
+                                });
+                                setCredits(PLAN_LIMITS[newPlan]);
+                                toast.success('Plano e créditos atualizados!');
+                            } catch (err) {
+                                toast.error('Erro ao atualizar créditos');
+                            }
                         }
                     });
 
@@ -186,18 +182,14 @@ const AdminUserDetail = ({ user, onBack }) => {
     const handleSaveCredits = async () => {
         setLoading(true);
         try {
-            const { error: rpcError } = await supabase.rpc('update_user_credits_sys', {
-                target_user_id: user.id,
-                new_credits: parseInt(credits)
+            await apiClient.post('/api/profiles/admin/update-credits', {
+                userId: user.id,
+                credits: parseInt(credits)
             });
-
-            if (rpcError) throw new Error(rpcError.message);
-
-            // Update user object in local scope (parent list won't auto-update unless refreshed, but that's ok)
             toast.success('Créditos atualizados com sucesso!');
         } catch (error) {
             console.error('Error updating credits:', error);
-            toast.error('Erro ao atualizar créditos: ' + error.message);
+            toast.error('Erro ao atualizar créditos');
         } finally {
             if (isMounted.current) setLoading(false);
         }
@@ -205,11 +197,7 @@ const AdminUserDetail = ({ user, onBack }) => {
 
     const fetchWhatsapp = async () => {
         try {
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('whatsapp')
-                .eq('id', user.id)
-                .single();
+            const { data } = await apiClient.get(`/api/profiles/admin/profile/${user.id}`);
             if (data && isMounted.current) {
                 setWhatsapp(formatPhone(data.whatsapp));
             }
@@ -234,12 +222,7 @@ const AdminUserDetail = ({ user, onBack }) => {
     const handleSaveWhatsapp = async () => {
         setLoading(true);
         try {
-            const { error } = await supabase
-                .from('profiles')
-                .update({ whatsapp: whatsapp })
-                .eq('id', user.id);
-
-            if (error) throw error;
+            await apiClient.patch(`/api/profiles/admin/profile/${user.id}`, { whatsapp: whatsapp });
             toast.success('WhatsApp atualizado!');
         } catch (error) {
             toast.error('Erro ao salvar WhatsApp');
@@ -254,25 +237,14 @@ const AdminUserDetail = ({ user, onBack }) => {
     const fetchStoreImages = async () => {
         if (isMounted.current) setIsLoadingImages(true);
         try {
-            const { data, error } = await supabase.storage
-                .from('store-images')
-                .list(user.id + '/', {
-                    limit: 4,
-                    offset: 0,
-                    sortBy: { column: 'created_at', order: 'desc' },
-                });
-
-            if (error) throw error;
-
-            if (data && isMounted.current) {
-                const images = data.map(file => ({
-                    name: file.name,
-                    url: supabase.storage.from('store-images').getPublicUrl(user.id + '/' + file.name).data.publicUrl
+            const { data } = await apiClient.get(`/api/storage/list/store-images?userId=${user.id}`);
+            if (isMounted.current) {
+                const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+                const images = data.map(name => ({
+                    name,
+                    url: `${baseUrl}/uploads/${user.id}/store-images/${name}`
                 }));
-                // Filter out placeholder/empty folder objects if any
-                setStoreImages(images.filter(img => img.name !== '.emptyFolderPlaceholder'));
-            } else if (isMounted.current) {
-                setStoreImages([]);
+                setStoreImages(images);
             }
         } catch (error) {
             console.error('Error fetching images:', error);
@@ -302,17 +274,13 @@ const AdminUserDetail = ({ user, onBack }) => {
             const res = await fetch(croppedBase64);
             const croppedBlob = await res.blob();
 
-            const fileName = `${Date.now()}.jpg`;
-            const filePath = `${user.id}/${fileName}`;
+            const formData = new FormData();
+            formData.append('file', croppedBlob, 'store-image.jpg');
+            formData.append('userId', user.id);
 
-            const { error: uploadError } = await supabase.storage
-                .from('store-images')
-                .upload(filePath, croppedBlob, {
-                    contentType: 'image/jpeg',
-                    upsert: false
-                });
-
-            if (uploadError) throw uploadError;
+            await apiClient.post('/api/storage/upload/store-images', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
 
             if (isMounted.current) setStoreImageSrc(null);
             fetchStoreImages();
@@ -333,11 +301,7 @@ const AdminUserDetail = ({ user, onBack }) => {
             type: 'error',
             onConfirm: async () => {
                 try {
-                    const { error } = await supabase.storage
-                        .from('store-images')
-                        .remove([`${user.id}/${fileName}`]);
-
-                    if (error) throw error;
+                    await apiClient.delete(`/api/storage/delete/store-images/${fileName}?userId=${user.id}`);
                     fetchStoreImages();
                     toast.success('Imagem removida.');
                 } catch (error) {
@@ -386,13 +350,7 @@ const AdminUserDetail = ({ user, onBack }) => {
 
     const fetchSubscriptionHistory = async () => {
         try {
-            const { data, error } = await supabase
-                .from('subscription_history')
-                .select('*')
-                .eq('user_id', user.id)
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
+            const { data } = await apiClient.get(`/api/profiles/admin/subscription-history/${user.id}`);
             if (isMounted.current && data) {
                 setSubscriptionHistory(data);
             }
@@ -404,12 +362,10 @@ const AdminUserDetail = ({ user, onBack }) => {
     const handleSaveRegistration = async () => {
         setLoading(true);
         try {
-            const { error } = await supabase
-                .from('profiles')
-                .update({ full_name: fullName, cpf_cnpj: cpfCnpj })
-                .eq('id', user.id);
-
-            if (error) throw error;
+            await apiClient.patch(`/api/profiles/admin/profile/${user.id}`, {
+                full_name: fullName,
+                cpf_cnpj: cpfCnpj
+            });
             toast.success('Dados cadastrais atualizados!');
         } catch (error) {
             console.error(error);
@@ -429,12 +385,7 @@ const AdminUserDetail = ({ user, onBack }) => {
                 payment_method: paymentMethod
             };
 
-            const { error } = await supabase
-                .from('profiles')
-                .update(updates)
-                .eq('id', user.id);
-
-            if (error) throw error;
+            await apiClient.patch(`/api/profiles/admin/profile/${user.id}`, updates);
             toast.success('Dados financeiros atualizados!');
         } catch (error) {
             console.error(error);
@@ -452,11 +403,9 @@ const AdminUserDetail = ({ user, onBack }) => {
             onConfirm: async () => {
                 setLoading(true);
                 try {
-                    const { data, error } = await supabase.rpc('handle_manual_subscription_renewal', {
-                        target_user_id: user.id
+                    const { data } = await apiClient.post('/api/profiles/admin/manual-renewal', {
+                        userId: user.id
                     });
-
-                    if (error) throw error;
 
                     if (data && isMounted.current) {
                         setCredits(data.new_credits);
@@ -467,7 +416,7 @@ const AdminUserDetail = ({ user, onBack }) => {
                     }
                 } catch (error) {
                     console.error(error);
-                    toast.error('Erro na renovação manual: ' + error.message);
+                    toast.error('Erro na renovação manual');
                 } finally {
                     if (isMounted.current) setLoading(false);
                 }
@@ -479,27 +428,14 @@ const AdminUserDetail = ({ user, onBack }) => {
     // LOGO TAB LOGIC
     // =================================================================================
     const fetchLogo = async () => {
-        if (isMounted.current) setExistingLogoUrl(null); // Clear previous
+        if (isMounted.current) setExistingLogoUrl(null);
 
         try {
-            // Bypass list() which might be restricted by RLS for admins on other users' folders
-            // Directly attempt to load the expected path
-            const path = `${user.id}/logos/logo.png`;
-            const { data } = supabase.storage.from('gallery').getPublicUrl(path);
-
-            if (data?.publicUrl) {
-                const url = `${data.publicUrl}?t=${Date.now()}`;
-
-                // Verify existence by loading it as an Image
-                const img = new Image();
-                img.onload = () => {
-                    if (isMounted.current) setExistingLogoUrl(url);
-                };
-                img.onerror = () => {
-                    // 404 or other error - assume no logo
-                    // console.log("Logo not found for user", user.id);
-                };
-                img.src = url;
+            const { data } = await apiClient.get(`/api/storage/list/logos?userId=${user.id}`);
+            if (data && data.length > 0 && isMounted.current) {
+                const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+                const url = `${baseUrl}/uploads/${user.id}/logos/logo.png?t=${Date.now()}`;
+                setExistingLogoUrl(url);
             }
         } catch (error) {
             console.error("Error checking logo:", error);
@@ -608,21 +544,13 @@ const AdminUserDetail = ({ user, onBack }) => {
                 }, 'image/png');
             });
 
-            const path = `${user.id}/logos/logo.png`;
+            const formData = new FormData();
+            formData.append('file', blob, 'logo.png');
+            formData.append('userId', user.id);
 
-            // Try delete first (might fail if permissions restricted, but upsert should handle overwrite mostly)
-            try {
-                await supabase.storage.from('gallery').remove([path]);
-            } catch (e) { /* ignore delete error */ }
-
-            const { error } = await supabase.storage
-                .from('gallery')
-                .upload(path, blob, {
-                    contentType: 'image/png',
-                    upsert: true
-                });
-
-            if (error) throw error;
+            await apiClient.post('/api/storage/upload/logos', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
 
             fetchLogo();
             if (isMounted.current) setLogoImage(null);
@@ -630,7 +558,7 @@ const AdminUserDetail = ({ user, onBack }) => {
 
         } catch (error) {
             console.error('Error saving logo:', error);
-            toast.error('Erro ao salvar logotipo: ' + error.message);
+            toast.error('Erro ao salvar logotipo');
         } finally {
             if (isMounted.current) setLoading(false);
         }
@@ -644,11 +572,7 @@ const AdminUserDetail = ({ user, onBack }) => {
             onConfirm: async () => {
                 setLoading(true);
                 try {
-                    const { error } = await supabase.storage
-                        .from('gallery')
-                        .remove([`${user.id}/logos/logo.png`]);
-
-                    if (error) throw error;
+                    await apiClient.delete(`/api/storage/delete/logos/logo.png?userId=${user.id}`);
                     if (isMounted.current) {
                         setExistingLogoUrl(null);
                         setLogoImage(null);
@@ -820,41 +744,15 @@ const AdminUserDetail = ({ user, onBack }) => {
                                         onConfirm: async () => {
                                             setLoading(true);
                                             try {
-                                                const PROJECT_REF = 'qyruweidqlqniqdatnxx';
-                                                const FUNCTION_URL = `https://${PROJECT_REF}.supabase.co/functions/v1/delete-user`;
-                                                const { data: { session } } = await supabase.auth.getSession();
-
-                                                console.log("Attempting to delete user:", user.id);
-
-                                                const response = await fetch(FUNCTION_URL, {
-                                                    method: 'POST',
-                                                    headers: {
-                                                        'Content-Type': 'application/json',
-                                                        'Authorization': `Bearer ${session.access_token}`
-                                                    },
-                                                    body: JSON.stringify({ user_id: user.id })
+                                                await apiClient.post('/api/auth/admin/delete-user', {
+                                                    user_id: user.id
                                                 });
 
-                                                const respText = await response.text();
-                                                console.log("Delete response status:", response.status);
-                                                console.log("Delete response body:", respText);
-
-                                                let errData = {};
-                                                try {
-                                                    errData = JSON.parse(respText);
-                                                } catch (e) {
-                                                    errData = { error: respText || "Unknown error" };
-                                                }
-
-                                                if (!response.ok) {
-                                                    throw new Error(errData.error || `Erro ${response.status}: ${respText}`);
-                                                }
-
                                                 toast.success("Usuário excluído com sucesso.");
-                                                onBack(); // Go back to list
+                                                onBack();
                                             } catch (error) {
                                                 console.error("Delete user error:", error);
-                                                toast.error(`Falha: ${error.message}`);
+                                                toast.error(`Falha ao excluir usuário`);
                                             } finally {
                                                 if (isMounted.current) setLoading(false);
                                             }
@@ -1059,29 +957,16 @@ const AdminUserDetail = ({ user, onBack }) => {
                                             onConfirm: async () => {
                                                 setLoading(true);
                                                 try {
-                                                    const PROJECT_REF = 'qyruweidqlqniqdatnxx'; // Should ideally be in env but hardcoded in other places
-                                                    const FUNCTION_URL = `https://${PROJECT_REF}.supabase.co/functions/v1/update-user`;
-                                                    const { data: { session } } = await supabase.auth.getSession();
-
-                                                    const response = await fetch(FUNCTION_URL, {
-                                                        method: 'POST',
-                                                        headers: {
-                                                            'Content-Type': 'application/json',
-                                                            'Authorization': `Bearer ${session.access_token}`
-                                                        },
-                                                        body: JSON.stringify({ user_id: user.id, password: newPass })
+                                                    await apiClient.post('/api/auth/admin/update-user', {
+                                                        user_id: user.id,
+                                                        password: newPass
                                                     });
-
-                                                    if (!response.ok) {
-                                                        const errData = await response.json();
-                                                        throw new Error(errData.error || "Falha ao atualizar senha");
-                                                    }
 
                                                     toast.success("Senha alterada com sucesso!");
                                                     e.target.reset();
                                                 } catch (error) {
                                                     console.error(error);
-                                                    toast.error(`Erro: ${error.message}`);
+                                                    toast.error(`Erro ao atualizar senha`);
                                                 } finally {
                                                     if (isMounted.current) setLoading(false);
                                                 }

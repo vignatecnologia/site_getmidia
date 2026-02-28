@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Upload, Trash2, Save, Plus, X, Loader2, Edit2 } from 'lucide-react';
-import { supabase } from '../../lib/supabaseClient';
+import { apiClient } from '../../lib/apiClient';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import toast from 'react-hot-toast';
 
@@ -46,14 +46,7 @@ const SiteGalleries = ({ selectedPage = 'getmidia-produto', onPageSelect }) => {
     const fetchImages = async () => {
         setIsLoading(true);
         try {
-            const { data, error } = await supabase
-                .from('site_gallery_images')
-                .select('*')
-                .eq('page_slug', page)
-                .order('display_order', { ascending: true })
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
+            const { data } = await apiClient.get(`/site-gallery/${page}`);
             setImages(data || []);
             setHasOrderChanged(false);
         } catch (error) {
@@ -82,11 +75,8 @@ const SiteGalleries = ({ selectedPage = 'getmidia-produto', onPageSelect }) => {
                 display_order: index
             }));
 
-            const promises = updates.map(u =>
-                supabase.from('site_gallery_images').update({ display_order: u.display_order }).eq('id', u.id)
-            );
+            await apiClient.post('/site-gallery/update-order', { updates });
 
-            await Promise.all(promises);
 
             setHasOrderChanged(false);
             toast.success('Ordem salva com sucesso!');
@@ -116,32 +106,17 @@ const SiteGalleries = ({ selectedPage = 'getmidia-produto', onPageSelect }) => {
         setUploading(true);
 
         try {
-            // 1. Upload Image to Storage
-            const fileExt = newItem.file.name.split('.').pop();
-            const fileName = `${Math.random()}.${fileExt}`;
-            const filePath = `site-gallery/${page}/${fileName}`;
+            const formData = new FormData();
+            formData.append('file', newItem.file);
+            formData.append('pageSlug', page);
+            formData.append('title', newItem.title);
+            formData.append('description', newItem.description);
 
-            const { error: uploadError } = await supabase.storage
-                .from('gallery-images')
-                .upload(filePath, newItem.file);
+            await apiClient.post('/site-gallery/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
 
-            if (uploadError) throw uploadError;
-
-            const { data: { publicUrl } } = supabase.storage
-                .from('gallery-images')
-                .getPublicUrl(filePath);
-
-            // 2. Save Metadata to DB
-            const { error: dbError } = await supabase
-                .from('site_gallery_images')
-                .insert({
-                    page_slug: page,
-                    image_url: publicUrl,
-                    title: newItem.title,
-                    description: newItem.description
-                });
-
-            if (dbError) throw dbError;
+            // Note: display_order is handled by the backend or defaults to 0
 
             // 3. Reset and Refresh
             setNewItem(null);
@@ -161,15 +136,10 @@ const SiteGalleries = ({ selectedPage = 'getmidia-produto', onPageSelect }) => {
         setUploading(true);
 
         try {
-            const { error } = await supabase
-                .from('site_gallery_images')
-                .update({
-                    title: editingItem.title,
-                    description: editingItem.description
-                })
-                .eq('id', editingItem.id);
-
-            if (error) throw error;
+            await apiClient.patch(`/site-gallery/${editingItem.id}`, {
+                title: editingItem.title,
+                description: editingItem.description
+            });
 
             setEditingItem(null);
             fetchImages();
@@ -186,12 +156,7 @@ const SiteGalleries = ({ selectedPage = 'getmidia-produto', onPageSelect }) => {
         if (!confirm('Tem certeza que deseja excluir esta imagem?')) return;
 
         try {
-            const { error } = await supabase
-                .from('site_gallery_images')
-                .delete()
-                .eq('id', id);
-
-            if (error) throw error;
+            await apiClient.delete(`/site-gallery/${id}`);
             fetchImages();
             toast.success('Imagem excluída com sucesso!');
         } catch (error) {
@@ -326,7 +291,11 @@ const SiteGalleries = ({ selectedPage = 'getmidia-produto', onPageSelect }) => {
                                                 className={`bg-gray-800 border border-gray-700 rounded-xl overflow-hidden group relative ${snapshot.isDragging ? 'ring-2 ring-yellow-500 z-50' : ''}`}
                                             >
                                                 <div className="aspect-video bg-black relative">
-                                                    <img src={img.image_url} alt={img.title} className="w-full h-full object-cover pointer-events-none" />
+                                                    {(() => {
+                                                        const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+                                                        const fullUrl = img.image_url.startsWith('http') ? img.image_url : `${baseUrl}${img.image_url}`;
+                                                        return <img src={fullUrl} alt={img.title} className="w-full h-full object-cover pointer-events-none" />;
+                                                    })()}
                                                     <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
                                                         <button
                                                             onClick={(e) => {
@@ -383,7 +352,11 @@ const SiteGalleries = ({ selectedPage = 'getmidia-produto', onPageSelect }) => {
 
                         <div className="p-6 space-y-4">
                             <div className="aspect-video bg-black rounded-lg overflow-hidden flex items-center justify-center border border-gray-800">
-                                <img src={editingItem.image_url} alt="Preview" className="max-w-full max-h-full object-contain" />
+                                {(() => {
+                                    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+                                    const fullUrl = editingItem.image_url.startsWith('http') ? editingItem.image_url : `${baseUrl}${editingItem.image_url}`;
+                                    return <img src={fullUrl} alt="Preview" className="max-w-full max-h-full object-contain" />;
+                                })()}
                             </div>
 
                             <div>

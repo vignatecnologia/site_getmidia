@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../lib/supabaseClient';
+import { apiClient } from '../lib/apiClient';
 import { Users, Shield, LogOut, Search, Image, Edit2, Coins, Eye, Ticket as TicketIcon } from 'lucide-react';
 import SiteGalleries from '../components/Admin/SiteGalleries';
 import ReportedImages from '../components/Admin/ReportedImages';
@@ -13,18 +13,15 @@ const TicketsTab = ({ users }) => {
 
     const fetchTickets = async () => {
         setIsLoading(true);
-        const { data, error } = await supabase
-            .from('tickets')
-            .select('*')
-            .order('created_at', { ascending: false });
-
-        if (error) {
+        try {
+            const { data } = await apiClient.get('/api/tickets/admin/list');
+            setTickets(data || []);
+        } catch (error) {
             console.error(error);
             toast.error("Erro ao buscar tickets");
-        } else {
-            setTickets(data);
+        } finally {
+            setIsLoading(false);
         }
-        setIsLoading(false);
     };
 
     useEffect(() => {
@@ -33,11 +30,12 @@ const TicketsTab = ({ users }) => {
 
     const handleResolve = async (id) => {
         if (!window.confirm("Marcar como resolvido?")) return;
-        const { error } = await supabase.from('tickets').update({ status: 'resolved' }).eq('id', id);
-        if (error) toast.error("Erro ao atualizar");
-        else {
+        try {
+            await apiClient.patch(`/api/tickets/admin/${id}`, { status: 'resolved' });
             toast.success("Ticket resolvido!");
             fetchTickets();
+        } catch (error) {
+            toast.error("Erro ao atualizar");
         }
     };
 
@@ -109,10 +107,11 @@ const AdminPanel = () => {
 
     useEffect(() => {
         const checkAuth = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
+            const savedUser = localStorage.getItem('getmidia_user');
+            const user = savedUser ? JSON.parse(savedUser) : null;
 
             const allowedEmails = ['vignatecnologia@gmail.com', 'projeto.getmidia@gmail.com'];
-            if (!session || !allowedEmails.includes(session.user.email)) {
+            if (!user || !allowedEmails.includes(user.email)) {
                 navigate('/');
                 return;
             }
@@ -125,95 +124,30 @@ const AdminPanel = () => {
     }, [navigate]);
 
     const fetchReportCount = async () => {
-        const { count } = await supabase
-            .from('reported_images')
-            .select('*', { count: 'exact', head: true })
-            .eq('status', 'pending');
-        if (count !== null) setPendingReports(count);
+        try {
+            const { data } = await apiClient.get('/api/reports/admin/count-pending');
+            setPendingReports(data.count || 0);
+        } catch (error) {
+            console.error('Error fetching report count:', error);
+        }
     };
 
     const fetchUsers = async () => {
         try {
             setLoading(true);
-            const { data: { session } } = await supabase.auth.getSession();
-            const token = session?.access_token;
-            if (!token) throw new Error("No session token");
-
-            // 1. Fetch Auth Users (Emails) from Edge Function
-            const PROJECT_REF = 'qyruweidqlqniqdatnxx';
-            const FUNCTION_URL = `https://${PROJECT_REF}.supabase.co/functions/v1/list-users`;
-
-            let usersData = [];
-            try {
-                const response = await fetch(FUNCTION_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-                        'X-Supabase-Auth': token
-                    }
-                });
-                if (response.ok) {
-                    usersData = await response.json();
-                } else {
-                    console.warn("Failed to fetch users from Edge Function", response.status);
-                }
-            } catch (err) {
-                console.warn("Edge function fetch error:", err);
-            }
-
-            // 2. Fetch Profiles (Credits) directly from Database (Source of Truth)
-            const { data: profilesData, error: profileError } = await supabase
-                .from('profiles')
-                .select('*');
-
-            if (profileError) throw profileError;
-
-            // 3. Merge Data
-            let merged = [];
-
-            if (usersData && usersData.length > 0) {
-                merged = usersData.map(u => {
-                    const profile = profilesData?.find(p => p.id === u.id);
-                    return {
-                        ...u,
-                        credits: profile ? profile.credits : (u.credits || 0),
-                        full_name: profile ? profile.full_name : u.full_name,
-                        phone: profile ? profile.phone : u.phone,
-                        cpf_cnpj: profile ? profile.cpf_cnpj : u.cpf_cnpj,
-                        plan: profile ? profile.plan : u.plan,
-                        allowed_features: profile ? profile.allowed_features : u.allowed_features,
-                        whatsapp: profile ? profile.whatsapp : u.whatsapp,
-                        subscription_status: profile ? profile.subscription_status : u.subscription_status,
-                        subscription_start: profile ? profile.subscription_start : u.subscription_start,
-                        current_period_end: profile ? profile.current_period_end : u.current_period_end,
-                        payment_method: profile ? profile.payment_method : u.payment_method,
-                    };
-                });
-            } else if (profilesData) {
-                // Fallback: Show just profiles if Auth list fails
-                merged = profilesData.map(p => ({
-                    id: p.id,
-                    email: p.email || 'Email não acessível',
-                    full_name: p.full_name,
-                    credits: p.credits,
-                    phone: p.phone,
-                    cpf_cnpj: p.cpf_cnpj,
-                    created_at: p.updated_at
-                }));
-            }
-
-            setUsers(merged);
-
+            const { data } = await apiClient.get('/api/profiles/admin/list');
+            setUsers(data || []);
         } catch (error) {
             console.error('Error fetching users:', error);
+            toast.error("Erro ao carregar usuários");
         } finally {
             setLoading(false);
         }
     };
 
     const handleLogout = async () => {
-        await supabase.auth.signOut();
+        localStorage.removeItem('getmidia_token');
+        localStorage.removeItem('getmidia_user');
         navigate('/login');
     };
 
@@ -240,34 +174,13 @@ const AdminPanel = () => {
             e.preventDefault();
             setCreating(true);
             try {
-                // Determine function URL based on env
-                const PROJECT_REF = 'qyruweidqlqniqdatnxx';
-                const FUNCTION_URL = `https://${PROJECT_REF}.supabase.co/functions/v1/create-user`;
-
-                const { data: { session } } = await supabase.auth.getSession();
-                const token = session?.access_token;
-
-                const response = await fetch(FUNCTION_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
-                        'X-Supabase-Auth': token
-                    },
-                    body: JSON.stringify(formData)
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.error || 'Erro ao criar usuário');
-                }
-
+                await apiClient.post('/api/auth/register', formData);
                 alert('Usuário criado com sucesso!');
                 onCreated();
                 onClose();
             } catch (error) {
                 console.error('Error creating user:', error);
-                alert('Erro ao criar usuário: ' + (error.message || 'Erro desconhecido'));
+                alert('Erro ao criar usuário: ' + (error.response?.data?.error || error.message || 'Erro desconhecido'));
             } finally {
                 setCreating(false);
             }

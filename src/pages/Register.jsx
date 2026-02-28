@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { supabase } from '../lib/supabaseClient'
+import { apiClient } from '../lib/apiClient'
 import { UserPlus } from 'lucide-react'
 
 const Register = () => {
@@ -25,23 +25,13 @@ const Register = () => {
         }
 
         try {
-            const { data, error: signUpError } = await supabase.auth.signUp({
+            await apiClient.post('/auth/register', {
                 email,
                 password,
-                options: {
-                    data: {
-                        full_name: fullName,
-                    },
-                },
+                full_name: fullName,
             })
 
-            if (signUpError) throw signUpError
-
-            // The 'profiles' trigger should handle the creation, but we send full_name in metadata.
-            // If we need to ensure profile update, we can do it here, but usually metadata syncs or trigger handles it.
-            // For now, let's assume trigger works. If not, we might need an explicit update.
-
-            alert('Cadastro realizado! Verifique seu email para confirmar.')
+            alert('Cadastro realizado com sucesso! Você já pode entrar.')
             navigate('/login')
         } catch (error) {
             setError(error.message)

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabaseClient';
+import { apiClient } from '../../lib/apiClient';
 import { ThumbsUp, ThumbsDown, Trash2, ExternalLink, Loader2, AlertTriangle, User } from 'lucide-react';
 
 const ReportedImages = ({ users = [] }) => {
@@ -14,17 +14,16 @@ const ReportedImages = ({ users = [] }) => {
     const fetchReports = async () => {
         try {
             setLoading(true);
-            // Fetch reports ordered by newest
-            const { data, error } = await supabase
-                .from('reported_images')
-                .select('*')
-                .order('created_at', { ascending: false });
+            const { data } = await apiClient.get('/api/reports/admin/list');
 
-            if (error) throw error;
+            const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
             const merged = data.map(r => {
-                // Find user in the passed users array
                 const user = users.find(u => u.id === r.user_id);
+                const publicUrl = r.image_url && r.image_url.startsWith('http')
+                    ? r.image_url
+                    : `${baseUrl}/uploads/${r.user_id}/reported-images/${r.image_path}`;
+
                 return {
                     ...r,
                     user: user ? {
@@ -34,7 +33,7 @@ const ReportedImages = ({ users = [] }) => {
                         full_name: 'Usuário Desconhecido',
                         email: null
                     },
-                    publicUrl: getImageUrl(r.image_path)
+                    publicUrl
                 };
             });
 
@@ -47,59 +46,18 @@ const ReportedImages = ({ users = [] }) => {
         }
     };
 
-    const getImageUrl = (path) => {
-        const { data } = supabase.storage
-            .from('reported_images')
-            .getPublicUrl(path);
-        return data.publicUrl;
-    };
 
     const handleRefund = async (report) => {
-        if (!confirm(`Confirmar reembolso de ${report.cost} crédito(s) para ${report.user.full_name}?`)) return;
+        if (!confirm(`Confirmar reembolso de ${report.cost || 1} crédito(s) para ${report.user.full_name}?`)) return;
 
         setProcessingId(report.id);
         try {
-            // 1. Give credits back
-            // We can use the SAME rpc function 'consume_credits' with negative amount to ADD?
-            // "consume_credits" logic:
-            // "new_credits := current_credits - amount;"
-            // So if amount is -1, it becomes current - (-1) = current + 1. YES.
-
-            // Wait, we need to execute this AS THE USER? No, we are admin. 
-            // The 'consume_credits' uses 'auth.uid()'. We cannot use it for OTHER users.
-
-            // We need to use 'update_user_credits_sys' (the one from previous task) or direct update
-            // Since we are Admin and have RLS bypass policy for updates (from previous task), we can use the RPC we made:
-            // 'update_user_credits_sys(target_user_id, new_credits)' -> This SETS absolute value. Not add.
-
-            // Better to just update the row directly: credits = credits + cost.
-
-            // Fetch current credits first
-            const { data: profile } = await supabase.from('profiles').select('credits').eq('id', report.user_id).single();
-            const current = profile?.credits || 0;
-            const newCredits = current + report.cost;
-
-            // Use the sys RPC to set exact value to avoid RLS issues
-            const { error: rpcError } = await supabase.rpc('update_user_credits_sys', {
-                target_user_id: report.user_id,
-                new_credits: newCredits
-            });
-
-            if (rpcError) throw rpcError;
-
-            // 2. Update report status
-            await supabase
-                .from('reported_images')
-                .update({ status: 'refunded' })
-                .eq('id', report.id);
-
-            // Update local state
+            await apiClient.post(`/api/reports/admin/${report.id}/refund`);
             setReports(reports.map(r => r.id === report.id ? { ...r, status: 'refunded' } : r));
             alert("Reembolso efetuado com sucesso!");
-
         } catch (error) {
             console.error(error);
-            alert("Erro ao reembolsar: " + error.message);
+            alert("Erro ao reembolsar");
         } finally {
             setProcessingId(null);
         }
@@ -110,16 +68,11 @@ const ReportedImages = ({ users = [] }) => {
 
         setProcessingId(report.id);
         try {
-            await supabase
-                .from('reported_images')
-                .update({ status: 'rejected' })
-                .eq('id', report.id);
-
+            await apiClient.post(`/api/reports/admin/${report.id}/reject`);
             setReports(reports.map(r => r.id === report.id ? { ...r, status: 'rejected' } : r));
-
         } catch (error) {
             console.error(error);
-            alert("Erro: " + error.message);
+            alert("Erro ao rejeitar");
         } finally {
             setProcessingId(null);
         }
@@ -130,22 +83,11 @@ const ReportedImages = ({ users = [] }) => {
 
         setProcessingId(report.id);
         try {
-            // Delete image from storage
-            await supabase.storage
-                .from('reported_images')
-                .remove([report.image_path]);
-
-            // Delete row
-            await supabase
-                .from('reported_images')
-                .delete()
-                .eq('id', report.id);
-
+            await apiClient.delete(`/api/reports/admin/${report.id}`);
             setReports(reports.filter(r => r.id !== report.id));
-
         } catch (error) {
             console.error(error);
-            alert("Erro ao excluir: " + error.message);
+            alert("Erro ao excluir");
         } finally {
             setProcessingId(null);
         }

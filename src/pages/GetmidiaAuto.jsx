@@ -4,7 +4,7 @@ import Footer from '../components/Footer'
 import { motion } from 'framer-motion'
 import { Car, CheckCircle, Zap, ArrowRight, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { supabase } from '../lib/supabaseClient'
+import { apiClient } from '../lib/apiClient'
 
 const features = [
     {
@@ -33,20 +33,19 @@ const GetmidiaAuto = () => {
 
     React.useEffect(() => {
         const fetchImages = async () => {
-            const { data } = await supabase
-                .from('site_gallery_images')
-                .select('*')
-                .eq('page_slug', 'getmidia-auto')
-                .order('display_order', { ascending: true })
-                .order('created_at', { ascending: false })
+            try {
+                const { data } = await apiClient.get('/api/site-gallery/getmidia-auto');
 
-            if (data) {
-                setDynamicItems(data.map(item => ({
-                    id: `dyn-${item.id}`,
-                    image: item.image_url,
-                    title: item.title,
-                    description: item.description
-                })))
+                if (data) {
+                    setDynamicItems(data.map(item => ({
+                        id: `dyn-${item.id}`,
+                        image: item.image_url,
+                        title: item.title,
+                        description: item.description
+                    })))
+                }
+            } catch (error) {
+                console.error("Error fetching gallery images:", error);
             }
         }
         fetchImages()

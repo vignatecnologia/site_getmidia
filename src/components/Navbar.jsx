@@ -8,25 +8,33 @@ const Navbar = () => {
     const [session, setSession] = React.useState(null)
 
     React.useEffect(() => {
-        // Get initial session
-        import('../lib/supabaseClient').then(({ supabase }) => {
-            supabase.auth.getSession().then(({ data: { session } }) => {
-                setSession(session)
-            })
+        const checkSession = () => {
+            const savedUser = localStorage.getItem('getmidia_user');
+            if (savedUser) {
+                setSession({ user: JSON.parse(savedUser) });
+            } else {
+                setSession(null);
+            }
+        };
 
-            // Listen for changes
-            const {
-                data: { subscription },
-            } = supabase.auth.onAuthStateChange((_event, session) => {
-                setSession(session)
-            })
-            return () => subscription.unsubscribe()
-        })
+        checkSession();
+
+        // Listen for storage changes in the same window
+        window.addEventListener('storage', checkSession);
+
+        // Polling as a fallback for same-tab updates (storage event only fires on other tabs)
+        const interval = setInterval(checkSession, 1000);
+
+        return () => {
+            window.removeEventListener('storage', checkSession);
+            clearInterval(interval);
+        };
     }, [])
 
     const handleLogout = async () => {
-        const { supabase } = await import('../lib/supabaseClient')
-        await supabase.auth.signOut()
+        localStorage.removeItem('getmidia_token');
+        localStorage.removeItem('getmidia_user');
+        setSession(null);
     }
 
     return (
@@ -53,7 +61,7 @@ const Navbar = () => {
                             {session ? (
                                 <>
                                     <span className="text-sm text-gray-300">
-                                        Olá, {session.user.user_metadata?.full_name?.split(' ')[0] || 'Usuário'}
+                                        Olá, {session.user.full_name?.split(' ')[0] || 'Usuário'}
                                     </span>
                                     <Link
                                         to="/minha-conta"
