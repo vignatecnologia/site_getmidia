@@ -1,5 +1,5 @@
-
 import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import { apiClient } from '../lib/apiClient'
 import { useState, useEffect } from 'react'
 import { Loader2, Check, Star, Zap, Crown, Coins } from 'lucide-react'
