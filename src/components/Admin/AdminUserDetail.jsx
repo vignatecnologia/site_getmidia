@@ -13,6 +13,13 @@ const AdminUserDetail = ({ user, onBack }) => {
     const [loading, setLoading] = useState(false);
     const [credits, setCredits] = useState(user.credits || 0);
 
+    const isMounted = useRef(true);
+
+    useEffect(() => {
+        isMounted.current = true;
+        return () => { isMounted.current = false; };
+    }, []);
+
     // --- State Sync with User Prop ---
     useEffect(() => {
         if (user) {
@@ -180,7 +187,37 @@ const AdminUserDetail = ({ user, onBack }) => {
         });
     };
 
-    // ... (skipped logo state part for now)
+    // --- Logo Editor State ---
+    const [existingLogoUrl, setExistingLogoUrl] = useState(null);
+    const [logoImage, setLogoImage] = useState(null);
+    const [logoScale, setLogoScale] = useState(1);
+    const [logoPosition, setLogoPosition] = useState({ x: 0, y: 0 });
+    const [logoIsPng, setLogoIsPng] = useState(false);
+    const [logoBgColor, setLogoBgColor] = useState('transparent');
+    const [logoAspectRatio, setLogoAspectRatio] = useState(1); // 1 for square, 1.5 for rectangle
+    const [isDragging, setIsDragging] = useState(false);
+    const [lastPointerPos, setLastPointerPos] = useState({ x: 0, y: 0 });
+
+    const logoCanvasRef = useRef(null);
+    const logoContainerRef = useRef(null);
+
+    // --- Pointer Events for Logo Editor ---
+    const handlePointerDown = (e) => {
+        setIsDragging(true);
+        setLastPointerPos({ x: e.clientX, y: e.clientY });
+    };
+
+    const handlePointerMove = (e) => {
+        if (!isDragging) return;
+        const dx = (e.clientX - lastPointerPos.x) / logoScale;
+        const dy = (e.clientY - lastPointerPos.y) / logoScale;
+        setLogoPosition(prev => ({ x: prev.x + dx, y: prev.y + dy }));
+        setLastPointerPos({ x: e.clientX, y: e.clientY });
+    };
+
+    const handlePointerUp = () => {
+        setIsDragging(false);
+    };
 
     // =================================================================================
     // GENERAL TAB LOGIC
@@ -523,7 +560,33 @@ const AdminUserDetail = ({ user, onBack }) => {
         reader.readAsDataURL(file);
     };
 
-    // Canvas drawing effect for Logo (skipped unchanged part)
+    // Canvas drawing effect for Logo
+    useEffect(() => {
+        if (logoImage && logoCanvasRef.current) {
+            const canvas = logoCanvasRef.current;
+            const ctx = canvas.getContext('2d');
+            const width = 800;
+            const height = width / logoAspectRatio;
+
+            canvas.width = width;
+            canvas.height = height;
+
+            // Clear and Background
+            ctx.clearRect(0, 0, width, height);
+            if (logoBgColor !== 'transparent') {
+                ctx.fillStyle = logoBgColor;
+                ctx.fillRect(0, 0, width, height);
+            }
+
+            // Draw Image
+            const drawWidth = logoImage.width * logoScale;
+            const drawHeight = logoImage.height * logoScale;
+            const x = (width - drawWidth) / 2 + (logoPosition.x * logoScale);
+            const y = (height - drawHeight) / 2 + (logoPosition.y * logoScale);
+
+            ctx.drawImage(logoImage, x, y, drawWidth, drawHeight);
+        }
+    }, [logoImage, logoScale, logoPosition, logoBgColor, logoAspectRatio]);
 
     const handleSaveLogo = async () => {
         if (!logoImage) return;
