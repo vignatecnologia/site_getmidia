@@ -90,7 +90,9 @@ const GetmidiaModa = () => {
                                     to="/register"
                                     className="inline-flex justify-center items-center gap-2 px-8 py-4 bg-purple-500 text-white rounded-xl font-bold text-lg hover:bg-purple-600 transition-all hover:shadow-lg hover:shadow-purple-500/20"
                                 >
+                                    {/* 
                                     Assinar Agora <ArrowRight className="w-5 h-5" />
+                                    */}
                                 </Link>
                                 <a
                                     href="#demo"

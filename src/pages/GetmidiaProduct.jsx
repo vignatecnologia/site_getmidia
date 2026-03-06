@@ -91,7 +91,9 @@ const GetmidiaProduct = () => {
                                     to="/register"
                                     className="inline-flex justify-center items-center gap-2 px-8 py-4 bg-yellow-500 text-black rounded-xl font-bold text-lg hover:bg-yellow-600 transition-all hover:shadow-lg hover:shadow-yellow-500/20"
                                 >
+                                    {/* 
                                     Assinar Agora <ArrowRight className="w-5 h-5" />
+                                    */}
                                 </Link>
                                 <a
                                     href="#demo"

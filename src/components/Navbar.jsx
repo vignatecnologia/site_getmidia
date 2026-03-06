@@ -79,9 +79,11 @@ const Navbar = () => {
                             ) : (
                                 <>
                                     <Link to="/login" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">Entrar</Link>
+                                    {/* 
                                     <a href="#pricing" className="bg-primary text-black hover:bg-yellow-400 px-4 py-2 rounded-lg text-sm font-bold transition-all hover:shadow-lg hover:shadow-primary/20">
                                         Assinar Agora
                                     </a>
+                                    */}
                                 </>
                             )}
                         </div>
@@ -113,7 +115,9 @@ const Navbar = () => {
                         ) : (
                             <>
                                 <Link to="/login" className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Entrar</Link>
+                                {/* 
                                 <a href="#pricing" className="text-primary hover:text-yellow-400 block px-3 py-2 rounded-md text-base font-medium">Assinar Agora</a>
+                                */}
                             </>
                         )}
                     </div>

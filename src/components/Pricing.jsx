@@ -163,6 +163,7 @@ const Pricing = () => {
                                 ))}
                             </div>
 
+                            {/* 
                             <button
                                 onClick={() => handleSubscribe(plan.id)}
                                 disabled={loadingPlan === plan.id}
@@ -176,7 +177,8 @@ const Pricing = () => {
                                 ) : (
                                     plan.button
                                 )}
-                            </button>
+                            </button> 
+                            */}
                         </div>
                     ))}
                 </div>

@@ -31,8 +31,7 @@ function App() {
       }} />
       <ScrollToTop />
       <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/preview" element={<LandingPage />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/produto" element={<GetmidiaProduct />} />
         <Route path="/moda" element={<GetmidiaModa />} />
         <Route path="/food" element={<GetmidiaFood />} />
