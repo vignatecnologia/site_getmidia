@@ -158,10 +158,14 @@ const AdminUserDetail = ({ user, onBack }) => {
                         type: 'info',
                         onConfirm: async () => {
                             try {
+                                const { data: { session } } = await supabase.auth.getSession();
                                 const { error: funcError } = await supabase.functions.invoke('update-user-credits', {
                                     body: {
                                         userId: user.id,
                                         credits: PLAN_LIMITS[newPlan]
+                                    },
+                                    headers: {
+                                        'x-supabase-auth': session?.access_token
                                     }
                                 });
                                 if (funcError) throw funcError;
@@ -225,10 +229,14 @@ const AdminUserDetail = ({ user, onBack }) => {
     const handleSaveCredits = async () => {
         setLoading(true);
         try {
+            const { data: { session } } = await supabase.auth.getSession();
             const { error: funcError } = await supabase.functions.invoke('update-user-credits', {
                 body: {
                     userId: user.id,
                     credits: parseInt(credits)
+                },
+                headers: {
+                    'x-supabase-auth': session?.access_token
                 }
             });
             if (funcError) throw funcError;
@@ -487,8 +495,12 @@ const AdminUserDetail = ({ user, onBack }) => {
             onConfirm: async () => {
                 setLoading(true);
                 try {
+                    const { data: { session } } = await supabase.auth.getSession();
                     const { data, error } = await supabase.functions.invoke('manual-renewal', {
-                        body: { userId: user.id }
+                        body: { userId: user.id },
+                        headers: {
+                            'x-supabase-auth': session?.access_token
+                        }
                     });
 
                     if (error) throw error;

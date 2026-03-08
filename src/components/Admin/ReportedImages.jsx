@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { ThumbsUp, ThumbsDown, Trash2, ExternalLink, Loader2, AlertTriangle, User } from 'lucide-react';
 
@@ -56,11 +57,15 @@ const ReportedImages = ({ users = [] }) => {
         setProcessingId(report.id);
         try {
             // 1. Update credits via Edge Function
+            const { data: { session } } = await supabase.auth.getSession();
             const { error: funcError } = await supabase.functions.invoke('update-user-credits', {
                 body: {
                     userId: report.user_id,
                     amount: report.cost || 1,
                     operation: 'add'
+                },
+                headers: {
+                    'x-supabase-auth': session?.access_token
                 }
             });
 

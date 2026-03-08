@@ -87,14 +87,6 @@ const GetmidiaProduct = () => {
                                 Transforme fotos simples de celular em produções de estúdio. Ideal para compartilhar no Whatsapp, usar na sua loja virtual, catálogos e anúncios no Instagram.
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4">
-                                <Link
-                                    to="/register"
-                                    className="inline-flex justify-center items-center gap-2 px-8 py-4 bg-yellow-500 text-black rounded-xl font-bold text-lg hover:bg-yellow-600 transition-all hover:shadow-lg hover:shadow-yellow-500/20"
-                                >
-                                    {/* 
-                                    Assinar Agora <ArrowRight className="w-5 h-5" />
-                                    */}
-                                </Link>
                                 <a
                                     href="#demo"
                                     className="inline-flex justify-center items-center gap-2 px-8 py-4 bg-gray-800 text-white rounded-xl font-bold text-lg hover:bg-gray-700 transition-all border border-gray-700 hover:border-yellow-500/30"

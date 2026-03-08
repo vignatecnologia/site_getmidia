@@ -150,7 +150,12 @@ const AdminPanel = () => {
     const fetchUsers = async () => {
         try {
             setLoading(true);
-            const { data, error } = await supabase.functions.invoke('list-users');
+            const { data: { session } } = await supabase.auth.getSession();
+            const { data, error } = await supabase.functions.invoke('list-users', {
+                headers: {
+                    'x-supabase-auth': session?.access_token
+                }
+            });
 
             if (error) throw error;
             // The function returns the merged data directly
@@ -193,8 +198,12 @@ const AdminPanel = () => {
             e.preventDefault();
             setCreating(true);
             try {
+                const { data: { session } } = await supabase.auth.getSession();
                 const { data, error } = await supabase.functions.invoke('create-user', {
-                    body: formData
+                    body: formData,
+                    headers: {
+                        'x-supabase-auth': session?.access_token
+                    }
                 });
 
                 if (error) throw error;

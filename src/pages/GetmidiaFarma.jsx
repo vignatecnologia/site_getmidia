@@ -86,14 +86,6 @@ const GetmidiaFarma = () => {
                                 Crie fotos publicitárias de alto nível para medicamentos e produtos farmacêuticos em segundos. Perfeito para marketing digital, delivery e encartes.
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4">
-                                <Link
-                                    to="/register"
-                                    className="inline-flex justify-center items-center gap-2 px-8 py-4 bg-orange-500 text-black rounded-xl font-bold text-lg hover:bg-orange-600 transition-all hover:shadow-lg hover:shadow-orange-500/20"
-                                >
-                                    {/* 
-                                    Assinar Agora <ArrowRight className="w-5 h-5" />
-                                    */}
-                                </Link>
                                 <a
                                     href="#demo"
                                     className="inline-flex justify-center items-center gap-2 px-8 py-4 bg-gray-800 text-white rounded-xl font-bold text-lg hover:bg-gray-700 transition-all border border-gray-700 hover:border-orange-500/30"

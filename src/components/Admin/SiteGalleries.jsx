@@ -44,7 +44,7 @@ const SiteGalleries = ({ selectedPage = 'getmidia-produto', onPageSelect }) => {
         setIsLoading(true);
         try {
             const { data, error } = await supabase
-                .from('site_gallery')
+                .from('site_gallery_images')
                 .select('*')
                 .eq('page_slug', page)
                 .order('display_order', { ascending: true });
@@ -79,7 +79,7 @@ const SiteGalleries = ({ selectedPage = 'getmidia-produto', onPageSelect }) => {
             }));
 
             const { error } = await supabase
-                .from('site_gallery')
+                .from('site_gallery_images')
                 .upsert(updates);
 
             if (error) throw error;
@@ -129,7 +129,7 @@ const SiteGalleries = ({ selectedPage = 'getmidia-produto', onPageSelect }) => {
 
             // 3. Insert into Database
             const { error: dbError } = await supabase
-                .from('site_gallery')
+                .from('site_gallery_images')
                 .insert([{
                     page_slug: page,
                     image_url: publicUrl,
@@ -159,7 +159,7 @@ const SiteGalleries = ({ selectedPage = 'getmidia-produto', onPageSelect }) => {
 
         try {
             const { error } = await supabase
-                .from('site_gallery')
+                .from('site_gallery_images')
                 .update({
                     title: editingItem.title,
                     description: editingItem.description
@@ -196,7 +196,7 @@ const SiteGalleries = ({ selectedPage = 'getmidia-produto', onPageSelect }) => {
 
             // 2. Delete from Database
             const { error } = await supabase
-                .from('site_gallery')
+                .from('site_gallery_images')
                 .delete()
                 .eq('id', id);
 
