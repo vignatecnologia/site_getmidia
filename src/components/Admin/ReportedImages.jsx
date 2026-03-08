@@ -25,7 +25,7 @@ const ReportedImages = ({ users = [] }) => {
                 const user = users.find(u => u.id === r.user_id);
                 // Supabase Storage URL
                 const { data: { publicUrl } } = supabase.storage
-                    .from('generated-images')
+                    .from('reports')
                     .getPublicUrl(`${r.user_id}/${r.image_path}`);
 
                 return {
@@ -116,7 +116,7 @@ const ReportedImages = ({ users = [] }) => {
         try {
             // 1. Delete from Storage
             await supabase.storage
-                .from('generated-images')
+                .from('reports')
                 .remove([`${report.user_id}/${report.image_path}`]);
 
             // 2. Delete from Database
