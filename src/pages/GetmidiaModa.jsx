@@ -36,9 +36,9 @@ const GetmidiaModa = () => {
         const fetchImages = async () => {
             try {
                 const { data, error } = await supabase
-                    .from('site_gallery')
+                    .from('site_gallery_images')
                     .select('*')
-                    .eq('page_name', 'getmidia-moda')
+                    .eq('page_slug', 'getmidia-moda')
                     .order('display_order');
 
                 if (error) throw error;

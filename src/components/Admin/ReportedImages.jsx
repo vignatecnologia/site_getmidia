@@ -15,21 +15,34 @@ const ReportedImages = ({ users = [] }) => {
         try {
             setLoading(true);
             const { data, error } = await supabase
-                .from('reports')
+                .from('reported_images')
                 .select('*')
                 .order('created_at', { ascending: false });
 
-            if (error) throw error;
+            console.log('Admin Fetch Reports Raw Data:', data);
+            if (error) {
+                console.error('Admin Fetch Reports Error:', error);
+                throw error;
+            }
 
             const merged = data.map(r => {
                 const user = users.find(u => u.id === r.user_id);
                 // Supabase Storage URL
                 const { data: { publicUrl } } = supabase.storage
-                    .from('reports')
-                    .getPublicUrl(`${r.user_id}/${r.image_url}`);
+                    .from('reported_images')
+                    .getPublicUrl(`${r.user_id}/${r.image_path}`);
+
+                // Extract cost from filename if possible (workaround for missing DB column)
+                // Filename format: cost_N_TIMESTAMP_report.png
+                let extractedCost = r.cost;
+                if (!extractedCost && r.image_path && r.image_path.startsWith('cost_')) {
+                    const match = r.image_path.match(/^cost_(\d+)_/);
+                    if (match) extractedCost = parseInt(match[1]);
+                }
 
                 return {
                     ...r,
+                    cost: extractedCost || 1, // Default to 1 if null (prevent display/refund issues)
                     user: user ? {
                         full_name: user.full_name || 'Nome Desconhecido',
                         email: user.email || 'Email Desconhecido'
@@ -73,7 +86,7 @@ const ReportedImages = ({ users = [] }) => {
 
             // 2. Update report status
             const { error: dbError } = await supabase
-                .from('reports')
+                .from('reported_images')
                 .update({ status: 'refunded' })
                 .eq('id', report.id);
 
@@ -95,7 +108,7 @@ const ReportedImages = ({ users = [] }) => {
         setProcessingId(report.id);
         try {
             const { error } = await supabase
-                .from('reports')
+                .from('reported_images')
                 .update({ status: 'rejected' })
                 .eq('id', report.id);
 
@@ -116,12 +129,12 @@ const ReportedImages = ({ users = [] }) => {
         try {
             // 1. Delete from Storage
             await supabase.storage
-                .from('reports')
-                .remove([`${report.user_id}/${report.image_url}`]);
+                .from('reported_images')
+                .remove([`${report.user_id}/${report.image_path}`]);
 
             // 2. Delete from Database
             const { error } = await supabase
-                .from('reports')
+                .from('reported_images')
                 .delete()
                 .eq('id', report.id);
 

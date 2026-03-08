@@ -37,9 +37,9 @@ const GetmidiaProduct = () => {
         const fetchImages = async () => {
             try {
                 const { data, error } = await supabase
-                    .from('site_gallery')
+                    .from('site_gallery_images')
                     .select('*')
-                    .eq('page_name', 'getmidia-produto')
+                    .eq('page_slug', 'getmidia-produto')
                     .order('display_order');
 
                 if (error) throw error;

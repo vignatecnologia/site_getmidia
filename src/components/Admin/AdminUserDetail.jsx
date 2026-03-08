@@ -819,7 +819,7 @@ const AdminUserDetail = ({ user, onBack }) => {
                                             setLoading(true);
                                             try {
                                                 const { error } = await supabase.functions.invoke('delete-user', {
-                                                    body: { userId: user.id }
+                                                    body: { user_id: user.id }
                                                 });
 
                                                 if (error) throw error;
@@ -1033,9 +1033,9 @@ const AdminUserDetail = ({ user, onBack }) => {
                                             onConfirm: async () => {
                                                 setLoading(true);
                                                 try {
-                                                    const { error } = await supabase.functions.invoke('update-user-password', {
+                                                    const { error } = await supabase.functions.invoke('update-user', {
                                                         body: {
-                                                            userId: user.id,
+                                                            user_id: user.id,
                                                             password: newPass
                                                         }
                                                     });

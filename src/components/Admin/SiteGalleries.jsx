@@ -11,6 +11,7 @@ const PAGES = [
     { id: 'getmidia-auto', label: 'GetMídia - Auto' },
     { id: 'getmidia-otica', label: 'GetMídia - Ótica' },
     { id: 'getmidia-pet', label: 'GetMídia - Pet' },
+    { id: 'getmidia-farma', label: 'GetMídia - Farma' },
 ];
 
 const SiteGalleries = ({ selectedPage = 'getmidia-produto', onPageSelect }) => {

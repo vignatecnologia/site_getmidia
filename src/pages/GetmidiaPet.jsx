@@ -35,9 +35,9 @@ const GetmidiaPet = () => {
         const fetchImages = async () => {
             try {
                 const { data, error } = await supabase
-                    .from('site_gallery')
+                    .from('site_gallery_images')
                     .select('*')
-                    .eq('page_name', 'getmidia-pet')
+                    .eq('page_slug', 'getmidia-pet')
                     .order('display_order');
 
                 if (error) throw error;
