@@ -15,7 +15,7 @@ const ReportedImages = ({ users = [] }) => {
         try {
             setLoading(true);
             const { data, error } = await supabase
-                .from('reported_images')
+                .from('reports')
                 .select('*')
                 .order('created_at', { ascending: false });
 
@@ -26,7 +26,7 @@ const ReportedImages = ({ users = [] }) => {
                 // Supabase Storage URL
                 const { data: { publicUrl } } = supabase.storage
                     .from('reports')
-                    .getPublicUrl(`${r.user_id}/${r.image_path}`);
+                    .getPublicUrl(`${r.user_id}/${r.image_url}`);
 
                 return {
                     ...r,
@@ -73,7 +73,7 @@ const ReportedImages = ({ users = [] }) => {
 
             // 2. Update report status
             const { error: dbError } = await supabase
-                .from('reported_images')
+                .from('reports')
                 .update({ status: 'refunded' })
                 .eq('id', report.id);
 
@@ -95,7 +95,7 @@ const ReportedImages = ({ users = [] }) => {
         setProcessingId(report.id);
         try {
             const { error } = await supabase
-                .from('reported_images')
+                .from('reports')
                 .update({ status: 'rejected' })
                 .eq('id', report.id);
 
@@ -117,11 +117,11 @@ const ReportedImages = ({ users = [] }) => {
             // 1. Delete from Storage
             await supabase.storage
                 .from('reports')
-                .remove([`${report.user_id}/${report.image_path}`]);
+                .remove([`${report.user_id}/${report.image_url}`]);
 
             // 2. Delete from Database
             const { error } = await supabase
-                .from('reported_images')
+                .from('reports')
                 .delete()
                 .eq('id', report.id);
 

@@ -136,7 +136,7 @@ const AdminPanel = () => {
     const fetchReportCount = async () => {
         try {
             const { count, error } = await supabase
-                .from('reported_images')
+                .from('reports')
                 .select('*', { count: 'exact', head: true })
                 .eq('status', 'pending');
 

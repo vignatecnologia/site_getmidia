@@ -101,9 +101,9 @@ const Login = () => {
           </button>
         </form>
 
-        <div className="text-center text-sm text-gray-500">
+        {/* <div className="text-center text-sm text-gray-500">
           Não tem uma conta? <Link to="/register" className="text-primary hover:underline font-medium">Cadastre-se</Link>
-        </div>
+        </div> */}
       </div>
     </div>
   )
