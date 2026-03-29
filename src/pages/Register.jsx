@@ -1,28 +1,91 @@
-
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { UserPlus } from 'lucide-react'
+import { UserPlus, ChevronDown, Eye, EyeOff } from 'lucide-react'
+import { toast } from 'react-hot-toast'
 
 const Register = () => {
     const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState({
-        fullName: '',
+        firstName: '',
+        lastName: '',
         email: '',
         password: '',
         confirmPassword: '',
         phone: '',
-        cpfCnpj: ''
+        cpfCnpj: '',
+        howDidYouKnow: '',
+        selectedModule: ''
     });
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [error, setError] = useState(null)
     const navigate = useNavigate()
 
+    const formatPhone = (value) => {
+        if (!value) return '';
+        const v = value.replace(/\D/g, '');
+        if (v.length > 11) return v.slice(0, 11);
+        return v
+            .replace(/^(\d{2})(\d)/g, '($1) $2')
+            .replace(/(\d)(\d{4})$/, '$1-$2');
+    };
+
+    const formatCpfCnpj = (value) => {
+        if (!value) return '';
+        const v = value.replace(/\D/g, '');
+        if (v.length <= 11) {
+            return v
+                .replace(/(\d{3})(\d)/, '$1.$2')
+                .replace(/(\d{3})(\d)/, '$1.$2')
+                .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
+                .slice(0, 14);
+        } else {
+            return v
+                .replace(/^(\d{2})(\d)/, '$1.$2')
+                .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+                .replace(/\.(\d{3})(\d)/, '.$1/$2')
+                .replace(/(\d{4})(\d)/, '$1-$2')
+                .slice(0, 18);
+        }
+    };
+
     const handleChange = (e) => {
         const { name, value } = e.target;
+        let formattedValue = value;
+
+        if (name === 'phone') {
+            formattedValue = formatPhone(value);
+        } else if (name === 'cpfCnpj') {
+            formattedValue = formatCpfCnpj(value);
+        }
+
         setFormData(prevData => ({
             ...prevData,
-            [name]: value
+            [name]: formattedValue
         }));
+    };
+
+    const translateAuthError = (msg) => {
+        if (!msg) return "Ocorreu um erro inesperado.";
+        const lowerMsg = msg.toLowerCase();
+        
+        if (lowerMsg.includes("row-level security") || lowerMsg.includes("policy")) {
+            return "Erro de permissão no banco de dados. Verifique as políticas de RLS.";
+        }
+        if (lowerMsg.includes("user already registered") || lowerMsg.includes("already registered") || lowerMsg.includes("email already exists")) {
+            return "Este e-mail já está cadastrado. Tente fazer login.";
+        }
+        if (lowerMsg.includes("invalid format") || lowerMsg.includes("invalid email")) {
+            return "Formato de e-mail inválido.";
+        }
+        if (lowerMsg.includes("weak password") || lowerMsg.includes("at least 6 characters")) {
+            return "A senha deve ter pelo menos 6 caracteres.";
+        }
+        if (lowerMsg.includes("rate limit exceeded")) {
+            return "Muitas tentativas em pouco tempo. Por favor, aguarde alguns minutos e tente novamente.";
+        }
+        return msg;
     };
 
     const handleRegister = async (e) => {
@@ -35,148 +98,245 @@ const Register = () => {
                 throw new Error("As senhas não coincidem.");
             }
 
-            // Using Edge Function to create user (Auth + Profile)
-            const { data, error: invokeError } = await supabase.functions.invoke('create-user', {
-                body: {
-                    email: formData.email,
-                    password: formData.password,
-                    full_name: formData.fullName,
-                    phone: formData.phone,
-                    cpf_cnpj: formData.cpfCnpj
+            if (!formData.howDidYouKnow) throw new Error("Por favor, selecione como nos conheceu.");
+            if (!formData.selectedModule) throw new Error("Por favor, selecione qual módulo deseja usar.");
+
+            // 1. Sign Up in Supabase Auth with metadata and redirect
+            const { data: authData, error: authError } = await supabase.auth.signUp({
+                email: formData.email,
+                password: formData.password,
+                options: {
+                    emailRedirectTo: window.location.origin + '/minha-conta',
+                    data: {
+                        full_name: `${formData.firstName} ${formData.lastName}`.trim(),
+                        phone: formData.phone,
+                        cpf_cnpj: formData.cpfCnpj,
+                        how_did_you_know: formData.howDidYouKnow,
+                        selected_module: formData.selectedModule
+                    }
                 }
             });
 
-            if (invokeError) throw invokeError;
+            if (authError) throw authError;
 
-            // Auto login after registration
-            const { error: loginError } = await supabase.auth.signInWithPassword({
-                email: formData.email,
-                password: formData.password
+            // No Supabase, se 'identities' vier vazio, significa que o usuário já existe
+            if (authData.user && authData.user.identities && authData.user.identities.length === 0) {
+                setError("Este e-mail já está cadastrado. Tente fazer login.");
+                toast.error("Este e-mail já está cadastrado.");
+                setLoading(false);
+                return;
+            }
+
+            // Notice: Manual profile upsert removed. Handled by Supabase Trigger.
+            toast.success("Parabéns! Sua conta foi criada com sucesso.", {
+                duration: 6000,
             });
+            
+            setError("CADASTRO REALIZADO: Enviamos um link de ativação para o seu e-mail. Por favor, acesse sua caixa de entrada (e spam) para ativar sua conta antes de entrar.");
+            
+            // Redirection logic
+            setTimeout(() => navigate('/login'), 5000);
 
-            if (loginError) throw loginError;
-
-            navigate('/minha-conta')
         } catch (error) {
-            setError(error.message)
+            console.error("Erro no cadastro:", error);
+            const translatedMessage = translateAuthError(error.message);
+            setError(translatedMessage)
+            toast.error(translatedMessage);
         } finally {
             setLoading(false)
         }
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-900 px-4 py-12">
-            <div className="max-w-md w-full space-y-8 bg-gray-800 p-8 rounded-2xl border border-gray-700 shadow-2xl">
+        <div className="min-h-screen flex items-center justify-center bg-gray-900 px-4 py-20 mt-10">
+            <div className="max-w-xl w-full space-y-8 bg-gray-800 p-8 rounded-2xl border border-gray-700 shadow-2xl">
                 <div className="text-center">
                     <Link to="/" className="inline-block mb-6">
                         <img src="/logo-new.png" alt="GetMídia Logo" className="h-[50px] w-auto mx-auto" />
                     </Link>
-                    <h2 className="text-3xl font-bold text-white">Criar Conta</h2>
-                    <p className="mt-2 text-gray-400">Comece a criar imagens incríveis hoje</p>
+                    <h2 className="text-3xl font-bold text-white tracking-tight">Crie sua conta</h2>
+                    <p className="mt-2 text-gray-400">Preencha os dados abaixo para começar</p>
                 </div>
 
                 {error && (
-                    <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-4 rounded-lg text-sm text-center">
+                    <div className={`${error.includes('CADASTRO REALIZADO') ? 'bg-yellow-500/10 border-yellow-500/50 text-yellow-500' : 'bg-red-500/10 border-red-500/50 text-red-500'} p-4 rounded-lg text-sm text-center`}>
                         {error}
                     </div>
                 )}
 
-                <form className="space-y-4" onSubmit={handleRegister}>
+                <form className="grid grid-cols-1 md:grid-cols-2 gap-4" onSubmit={handleRegister}>
+                    {/* Nome e Sobrenome */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1">Nome Completo</label>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1">Nome</label>
                         <input
                             type="text"
-                            name="fullName"
+                            name="firstName"
                             required
-                            className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-                            placeholder="Seu Nome"
-                            value={formData.fullName}
+                            className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500 outline-none transition-all placeholder:text-gray-700"
+                            placeholder="João"
+                            value={formData.firstName}
+                            onChange={handleChange}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1">Sobrenome</label>
+                        <input
+                            type="text"
+                            name="lastName"
+                            required
+                            className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500 outline-none transition-all placeholder:text-gray-700"
+                            placeholder="Silva"
+                            value={formData.lastName}
                             onChange={handleChange}
                         />
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1">Email</label>
+                    {/* Email */}
+                    <div className="md:col-span-2">
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1">E-mail</label>
                         <input
                             type="email"
                             name="email"
                             required
-                            className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
+                            className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500 outline-none transition-all placeholder:text-gray-700"
                             placeholder="seu@email.com"
                             value={formData.email}
                             onChange={handleChange}
                         />
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-300 mb-1">Telefone</label>
-                            <input
-                                type="text"
-                                name="phone"
-                                required
-                                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-                                placeholder="(00) 00000-0000"
-                                value={formData.phone}
-                                onChange={handleChange}
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-300 mb-1">CPF/CNPJ</label>
-                            <input
-                                type="text"
-                                name="cpfCnpj"
-                                required
-                                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-                                placeholder="000.000.000-00"
-                                value={formData.cpfCnpj}
-                                onChange={handleChange}
-                            />
-                        </div>
-                    </div>
-
+                    {/* CPF e Telefone */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1">Senha</label>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1">CPF</label>
                         <input
-                            type="password"
-                            name="password"
+                            type="text"
+                            name="cpfCnpj"
                             required
-                            className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-                            placeholder="••••••••"
-                            value={formData.password}
+                            className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500 outline-none transition-all placeholder:text-gray-700 font-mono"
+                            placeholder="000.000.000-00"
+                            maxLength={14}
+                            value={formData.cpfCnpj}
+                            onChange={handleChange}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1">CeluLar</label>
+                        <input
+                            type="tel"
+                            name="phone"
+                            required
+                            className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500 outline-none transition-all placeholder:text-gray-700 font-mono"
+                            placeholder="(00) 00000-0000"
+                            maxLength={15}
+                            value={formData.phone}
                             onChange={handleChange}
                         />
                     </div>
 
+                    {/* Senha e Confirmação */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1">Confirmar Senha</label>
-                        <input
-                            type="password"
-                            name="confirmPassword"
-                            required
-                            className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-                            placeholder="••••••••"
-                            value={formData.confirmPassword}
-                            onChange={handleChange}
-                        />
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1">Senha</label>
+                        <div className="relative">
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                name="password"
+                                required
+                                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500 outline-none transition-all placeholder:text-gray-700 pr-12"
+                                placeholder="••••••••"
+                                value={formData.password}
+                                onChange={handleChange}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 focus:outline-none"
+                            >
+                                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                            </button>
+                        </div>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1">Repetir Senha</label>
+                        <div className="relative">
+                            <input
+                                type={showConfirmPassword ? "text" : "password"}
+                                name="confirmPassword"
+                                required
+                                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500 outline-none transition-all placeholder:text-gray-700 pr-12"
+                                placeholder="••••••••"
+                                value={formData.confirmPassword}
+                                onChange={handleChange}
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 focus:outline-none"
+                            >
+                                {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Dropdowns */}
+                    <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1">Como nos conheceu?</label>
+                        <div className="relative">
+                            <select
+                                name="howDidYouKnow"
+                                required
+                                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500 outline-none transition-all appearance-none cursor-pointer"
+                                value={formData.howDidYouKnow}
+                                onChange={handleChange}
+                            >
+                                <option value="">Selecione...</option>
+                                <option value="Facebook">Facebook</option>
+                                <option value="Instagram">Instagram</option>
+                                <option value="Google">Google</option>
+                                <option value="Indicação">Indicação</option>
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1">Módulo de Acesso</label>
+                        <div className="relative">
+                            <select
+                                name="selectedModule"
+                                required
+                                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-xl text-white focus:ring-2 focus:ring-yellow-500/50 focus:border-yellow-500 outline-none transition-all appearance-none cursor-pointer"
+                                value={formData.selectedModule}
+                                onChange={handleChange}
+                            >
+                                <option value="">Selecione o módulo...</option>
+                                <option value="product">Produto</option>
+                                <option value="fashion">Moda</option>
+                                <option value="food">Food</option>
+                                <option value="auto">Auto</option>
+                                <option value="optical">Ótica</option>
+                                <option value="pet">Pet</option>
+                                <option value="farma">Farma</option>
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
+                        </div>
                     </div>
 
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full py-3 bg-primary hover:bg-yellow-400 text-black font-bold rounded-lg transition-all hover:shadow-lg hover:shadow-primary/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mt-4"
+                        className="md:col-span-2 w-full py-4 bg-yellow-500 hover:bg-yellow-400 text-black font-black uppercase tracking-widest text-xs rounded-xl transition-all hover:shadow-lg hover:shadow-yellow-500/20 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed mt-4 active:scale-95"
                     >
-                        {loading ? 'Criando conta...' : (
+                        {loading ? 'Criando sua conta...' : (
                             <>
                                 <UserPlus className="w-5 h-5" />
-                                Criar Conta
+                                Criar Minha Conta
                             </>
                         )}
                     </button>
                 </form>
 
-                <div className="text-center text-sm text-gray-500">
-                    Já tem uma conta? <Link to="/login" className="text-primary hover:underline font-medium">Entrar</Link>
+                <div className="text-center text-sm text-gray-500 pt-4 border-t border-gray-700/50">
+                    Já tem uma conta? <Link to="/login" className="text-yellow-500 hover:text-yellow-400 font-bold hover:underline transition-colors">Fazer Login</Link>
                 </div>
             </div>
         </div>

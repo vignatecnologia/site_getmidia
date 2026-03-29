@@ -12,6 +12,20 @@ const AdminUserDetail = ({ user, onBack }) => {
     const [activeTab, setActiveTab] = useState('plan'); // 'plan', 'store', 'logo', 'security'
     const [loading, setLoading] = useState(false);
     const [credits, setCredits] = useState(user.credits || 0);
+    const [plan, setPlan] = useState((user.plan || 'essencial').toLowerCase());
+    const [allowedFeatures, setAllowedFeatures] = useState(user.allowed_features || []);
+    
+    const [subStatus, setSubStatus] = useState(user.subscription_status || 'inactive');
+    const [subStart, setSubStart] = useState(user.subscription_start ? new Date(user.subscription_start).toISOString().split('T')[0] : '');
+    const [periodEnd, setPeriodEnd] = useState(user.current_period_end ? new Date(user.current_period_end).toISOString().split('T')[0] : '');
+    const [stripeCustomerId, setStripeCustomerId] = useState(user.stripe_customer_id || '');
+    
+    const [fullName, setFullName] = useState(user.full_name || '');
+    const [cpfCnpj, setCpfCnpj] = useState(user.cpf_cnpj || '');
+    const [whatsapp, setWhatsapp] = useState(user.whatsapp || '');
+
+    const [invoices, setInvoices] = useState([]);
+    const [isLoadingInvoices, setIsLoadingInvoices] = useState(false);
 
     const isMounted = useRef(true);
 
@@ -22,19 +36,61 @@ const AdminUserDetail = ({ user, onBack }) => {
 
     // --- State Sync with User Prop ---
     useEffect(() => {
-        if (user) {
-            setCredits(user.credits || 0);
-            setPlan((user.plan || 'testando').toLowerCase());
-            setAllowedFeatures(user.allowed_features || ALL_FEATURES);
-            setFullName(user.full_name || '');
-            setCpfCnpj(user.cpf_cnpj || '');
-            setWhatsapp(formatPhone(user.whatsapp || ''));
-            setSubStatus(user.subscription_status || 'inactive');
-            setSubStart(user.subscription_start ? new Date(user.subscription_start).toISOString().split('T')[0] : '');
-            setPeriodEnd(user.current_period_end ? new Date(user.current_period_end).toISOString().split('T')[0] : '');
-            setPaymentMethod(user.payment_method || 'mercado_pago');
-        }
-    }, [user]);
+        const fetchFreshData = async () => {
+            if (!user?.id) return;
+            
+            try {
+                // Fetch directly from the source of truth (the same table the user dashboard uses)
+                const { data: profile, error } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', user.id)
+                    .maybeSingle();
+
+                if (error) throw error;
+
+                if (profile) {
+                    setCredits(profile.credits || 0);
+                    
+                    // Normalize plan using both plan and plan_id (following UserDashboard logic)
+                    const rawPlanId = (profile.plan_id || '').toLowerCase();
+                    const rawPlanName = (profile.plan || '').toLowerCase();
+                    const fullPlanStr = `${rawPlanId} ${rawPlanName}`;
+                    
+                    let normalizedPlan = 'essencial';
+                    if (fullPlanStr.includes('prof')) normalizedPlan = 'profissional';
+                    else if (fullPlanStr.includes('avan') || fullPlanStr.includes('advan')) normalizedPlan = 'avancado';
+                    else if (fullPlanStr.includes('essen')) normalizedPlan = 'essencial';
+                    setPlan(normalizedPlan);
+
+                    // Admin Control: Only show what is strictly in allowed_features.
+                    let features = [...(profile.allowed_features || [])];
+                    if (features.length === 0) features = ['product'];
+                    setAllowedFeatures(features);
+
+                    setFullName(profile.full_name || '');
+                    setCpfCnpj(formatCpfCnpj(profile.cpf_cnpj || ''));
+                    setWhatsapp(formatPhone(profile.whatsapp || ''));
+                    
+                    // Handle subscription status normalization (active, active, Ativo)
+                    const rawStatus = (profile.subscription_status || '').toLowerCase();
+                    setSubStatus(rawStatus === 'active' || rawStatus === 'ativo' ? 'active' : 'inactive');
+                    
+                    // RESTORE MISSING FIELDS
+                    setSubStart(profile.subscription_start ? new Date(profile.subscription_start).toISOString().split('T')[0] : '');
+                    setPeriodEnd(profile.current_period_end ? new Date(profile.current_period_end).toISOString().split('T')[0] : '');
+                    setStripeCustomerId(profile.stripe_customer_id || '');
+                    
+                    // Trigger invoice fetch (uses fresh ID)
+                    fetchInvoices(profile.stripe_customer_id);
+                }
+            } catch (err) {
+                console.error("Error fetching fresh user data:", err);
+            }
+        };
+
+        fetchFreshData();
+    }, [user.id]);
 
     // --- Load Data on Mount ---
     useEffect(() => {
@@ -42,7 +98,7 @@ const AdminUserDetail = ({ user, onBack }) => {
             fetchWhatsapp();
             fetchLogo();
             fetchStoreImages();
-            fetchSubscriptionHistory();
+            // fetchSubscriptionHistory removed
         }
     }, [user?.id]);
 
@@ -80,31 +136,25 @@ const AdminUserDetail = ({ user, onBack }) => {
     const [storeZoom, setStoreZoom] = useState(1);
     const [storeCroppedAreaPixels, setStoreCroppedAreaPixels] = useState(null);
 
-    // --- Store Config State (Whatsapp) ---
-    const [whatsapp, setWhatsapp] = useState(user.whatsapp || '');
 
-    // --- Plan State ---
-    const [plan, setPlan] = useState((user.plan || 'testando').toLowerCase());
+    // --- Plan Constants ---
     const PLAN_LIMITS = {
-        'testando': 50,
         'essencial': 80,
         'avancado': 120,
         'profissional': 200
     };
 
-    // --- Features State ---
+    // --- Features Constants ---
     const ALL_FEATURES = ['product', 'food', 'fashion', 'optical', 'pet', 'auto', 'farma'];
     const FEATURE_LABELS = {
-        'product': 'Produto (Padrão)',
+        'product': 'Produto',
         'food': 'Food',
         'fashion': 'Moda',
         'optical': 'Ótica',
-        'pet': 'Veterinário / Pet',
-        'auto': 'Automóveis',
+        'pet': 'PET',
+        'auto': 'Auto',
         'farma': 'Farma',
     };
-
-    const [allowedFeatures, setAllowedFeatures] = useState(user.allowed_features || ALL_FEATURES);
 
     const handleToggleFeature = (feature) => {
         setAllowedFeatures(prev => {
@@ -255,7 +305,7 @@ const AdminUserDetail = ({ user, onBack }) => {
                 .from('profiles')
                 .select('whatsapp')
                 .eq('id', user.id)
-                .single();
+                .maybeSingle();
 
             if (error) throw error;
             if (data) {
@@ -269,7 +319,7 @@ const AdminUserDetail = ({ user, onBack }) => {
     const formatPhone = (value) => {
         if (!value) return '';
         const v = value.replace(/\D/g, '');
-        if (v.length > 11) return value;
+        if (v.length > 11) return value.slice(0, 11);
         return v
             .replace(/^(\d{2})(\d)/g, '($1) $2')
             .replace(/(\d)(\d{4})$/, '$1-$2');
@@ -388,32 +438,32 @@ const AdminUserDetail = ({ user, onBack }) => {
         });
     };
 
-    // --- Finance State ---
-    const [subStatus, setSubStatus] = useState(user.subscription_status || 'inactive');
-    const [subStart, setSubStart] = useState(user.subscription_start ? new Date(user.subscription_start).toISOString().split('T')[0] : '');
-    const [periodEnd, setPeriodEnd] = useState(user.current_period_end ? new Date(user.current_period_end).toISOString().split('T')[0] : '');
-    const [paymentMethod, setPaymentMethod] = useState(user.payment_method || 'mercado_pago');
+    // states moved to top
 
-    // --- Registration Data State ---
-    const [fullName, setFullName] = useState(user.full_name || '');
-    const [cpfCnpj, setCpfCnpj] = useState(user.cpf_cnpj || '');
+    // states moved to top
+
+    useEffect(() => {
+        if (activeTab === 'finance') {
+            fetchInvoices();
+        }
+    }, [activeTab]);
 
     const formatCpfCnpj = (value) => {
+        if (!value) return '';
         const v = value.replace(/\D/g, '');
         if (v.length <= 11) {
-            // CPF: 000.000.000-00
             return v
                 .replace(/(\d{3})(\d)/, '$1.$2')
                 .replace(/(\d{3})(\d)/, '$1.$2')
-                .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
+                .slice(0, 14);
         } else {
-            // CNPJ: 00.000.000/0000-00
             return v
                 .replace(/^(\d{2})(\d)/, '$1.$2')
                 .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
                 .replace(/\.(\d{3})(\d)/, '.$1/$2')
                 .replace(/(\d{4})(\d)/, '$1-$2')
-                .slice(0, 18); // Limit length
+                .slice(0, 18);
         }
     };
 
@@ -421,23 +471,34 @@ const AdminUserDetail = ({ user, onBack }) => {
         setCpfCnpj(formatCpfCnpj(e.target.value));
     };
 
-    // --- History State ---
-    const [subscriptionHistory, setSubscriptionHistory] = useState([]);
+    // states moved to top
 
-    const fetchSubscriptionHistory = async () => {
+    const fetchInvoices = async (manualId) => {
+        const targetCid = manualId || stripeCustomerId || user.stripe_customer_id;
+        if (!targetCid) return;
+        
+        setIsLoadingInvoices(true);
         try {
-            const { data, error } = await supabase
-                .from('finance_history')
-                .select('*')
-                .eq('user_id', user.id)
-                .order('created_at', { ascending: false });
+            const { data, error } = await supabase.functions.invoke('get-invoices', {
+                body: { 
+                    userId: user.id,
+                    stripeCustomerId: targetCid
+                }
+            });
 
             if (error) throw error;
-            if (data) {
-                setSubscriptionHistory(data);
+            if (data?.invoices) {
+                setInvoices(data.invoices);
+                
+                // If the function found a customer ID but we didn't have it, update local state
+                if (data.invoices.length > 0 && !stripeCustomerId) {
+                    // Try to extract customer ID from first invoice if possible or just rely on next reload
+                }
             }
         } catch (error) {
-            console.error('Error fetching history:', error);
+            console.error('Error fetching invoices:', error);
+        } finally {
+            setIsLoadingInvoices(false);
         }
     };
 
@@ -469,7 +530,7 @@ const AdminUserDetail = ({ user, onBack }) => {
                 subscription_status: subStatus,
                 subscription_start: subStart || null,
                 current_period_end: periodEnd || null,
-                payment_method: paymentMethod
+                stripe_customer_id: stripeCustomerId
             };
 
             const { error } = await supabase
@@ -479,6 +540,7 @@ const AdminUserDetail = ({ user, onBack }) => {
 
             if (error) throw error;
             toast.success('Dados financeiros atualizados!');
+            fetchInvoices();
         } catch (error) {
             console.error(error);
             toast.error('Erro ao salvar financeiro');
@@ -742,7 +804,7 @@ const AdminUserDetail = ({ user, onBack }) => {
                                             ? 'bg-primary/20 border-primary text-primary'
                                             : 'bg-gray-900 border-gray-700 text-gray-400 hover:border-gray-500'}`}
                                     >
-                                        <div className="font-bold capitalize">{key}</div>
+                                        <div className="font-bold capitalize">{key === 'avancado' ? 'Avançado' : key}</div>
                                         <div className="text-xs">{limit} créditos</div>
                                     </button>
                                 ))}
@@ -754,7 +816,7 @@ const AdminUserDetail = ({ user, onBack }) => {
                             <div className="flex items-center justify-between mb-4">
                                 <h3 className="text-white font-bold flex items-center gap-2">
                                     <Lock className="w-5 h-5 text-blue-400" />
-                                    Acessos Liberados (GetMídias)
+                                    Acessos Liberados (Módulos)
                                 </h3>
                                 <button
                                     onClick={handleSaveFeatures}
@@ -800,48 +862,6 @@ const AdminUserDetail = ({ user, onBack }) => {
                             </p>
                         </section>
 
-
-                        <section className="bg-red-500/10 rounded-xl p-6 border border-red-500/20 mt-8">
-                            <h3 className="text-red-400 font-bold mb-4 flex items-center gap-2">
-                                <Trash2 className="w-5 h-5" />
-                                Zona de Perigo
-                            </h3>
-                            <p className="text-sm text-gray-400 mb-4">
-                                Ações nesta área são irreversíveis e devem ser realizadas com cautela.
-                            </p>
-                            <button
-                                onClick={() => {
-                                    openModal({
-                                        title: 'Excluir Usuário',
-                                        message: `Tem certeza ABSOLUTA que deseja excluir o usuário ${user.email}? Todos os dados, imagens e histórico serão apagados permanentemente.`,
-                                        type: 'error',
-                                        onConfirm: async () => {
-                                            setLoading(true);
-                                            try {
-                                                const { error } = await supabase.functions.invoke('delete-user', {
-                                                    body: { user_id: user.id }
-                                                });
-
-                                                if (error) throw error;
-
-                                                toast.success("Usuário excluído com sucesso.");
-                                                onBack();
-                                            } catch (error) {
-                                                console.error("Delete user error:", error);
-                                                toast.error(`Falha ao excluir usuário`);
-                                            } finally {
-                                                if (isMounted.current) setLoading(false);
-                                            }
-                                        }
-                                    });
-                                }}
-                                className="w-full py-3 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/50 hover:border-transparent rounded-lg font-bold transition-all flex items-center justify-center gap-2"
-                            >
-                                <Trash2 className="w-4 h-4" />
-                                Excluir Usuário Permanentemente
-                            </button>
-                        </section>
-
                         <section className="bg-gray-800 rounded-xl p-6 border border-gray-700 mt-8">
                             <h3 className="text-white font-bold mb-4 flex items-center gap-2">
                                 <Coins className="w-5 h-5 text-yellow-500" />
@@ -860,7 +880,7 @@ const AdminUserDetail = ({ user, onBack }) => {
                                 <button
                                     onClick={handleSaveCredits}
                                     disabled={loading}
-                                    className="px-6 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
+                                    className="px-6 py-2.5 bg-primary hover:bg-primary-hover text-black rounded-lg font-medium transition-colors flex items-center gap-2 disabled:opacity-50"
                                 >
                                     {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                                     Salvar
@@ -885,7 +905,7 @@ const AdminUserDetail = ({ user, onBack }) => {
                                     <button
                                         onClick={handleSaveFinance}
                                         disabled={loading}
-                                        className="px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-lg text-xs font-bold transition-colors disabled:opacity-50 flex items-center gap-2"
+                                        className="px-4 py-2 bg-primary hover:bg-primary-hover text-black rounded-lg text-xs font-bold transition-colors disabled:opacity-50 flex items-center gap-2"
                                     >
                                         {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
                                         Salvar Dados
@@ -906,12 +926,13 @@ const AdminUserDetail = ({ user, onBack }) => {
                                         </select>
                                     </div>
                                     <div>
-                                        <label className="block text-xs text-gray-400 mb-1">Método de Pagamento</label>
+                                        <label className="block text-xs text-gray-400 mb-1">Stripe Customer ID</label>
                                         <input
                                             type="text"
-                                            value={paymentMethod}
-                                            onChange={(e) => setPaymentMethod(e.target.value)}
-                                            className="w-full bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-white outline-none focus:border-primary"
+                                            value={stripeCustomerId}
+                                            onChange={(e) => setStripeCustomerId(e.target.value)}
+                                            className="w-full bg-gray-900 border border-gray-600 rounded-lg px-3 py-2 text-white outline-none focus:border-primary font-mono text-xs"
+                                            placeholder="cus_..."
                                         />
                                     </div>
                                     <div>
@@ -934,72 +955,73 @@ const AdminUserDetail = ({ user, onBack }) => {
                                     </div>
                                 </div>
 
-                                <div className="bg-gray-900 p-4 rounded-lg border border-gray-700">
-                                    <h4 className="text-white font-bold text-sm mb-2">Simular Renovação Mensal</h4>
-                                    <p className="text-xs text-gray-400 mb-4">
-                                        Esta ação irá resetar os créditos deste usuário para <strong>{PLAN_LIMITS[plan]}</strong> e avançar a data de "Próxima Renovação" em 1 mês.
-                                        Os créditos atuais <strong>não</strong> serão acumulados.
-                                    </p>
-                                    <button
-                                        onClick={handleManualRenewal}
-                                        disabled={loading}
-                                        className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-bold text-sm transition-colors"
-                                    >
-                                        Renovar Agora (Resetar Créditos)
-                                    </button>
-                                </div>
+                                {/* Manual renewal removed per request */}
                             </section>
 
-                            {/* History Grid */}
+                            {/* Invoices Grid */}
                             <section className="bg-gray-800 rounded-xl p-6 border border-gray-700">
                                 <h3 className="text-white font-bold mb-4 flex items-center gap-2">
-                                    <Coins className="w-5 h-5 text-yellow-500" />
-                                    Histórico de Assinaturas
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5 text-yellow-500"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" /><polyline points="14 2 14 8 20 8" /><line x1="16" x2="8" y1="13" y2="13" /><line x1="16" x2="8" y1="17" y2="17" /><line x1="10" x2="8" y1="9" y2="9" /></svg>
+                                    Histórico de Faturas (Stripe)
                                 </h3>
-                                <div className="overflow-x-auto rounded-lg border border-gray-700">
-                                    <table className="w-full text-sm text-left text-gray-400">
-                                        <thead className="text-xs text-gray-200 uppercase bg-gray-700/50">
-                                            <tr>
-                                                <th className="px-4 py-3">Data Ação</th>
-                                                <th className="px-4 py-3">Tipo</th>
-                                                <th className="px-4 py-3">Plano</th>
-                                                <th className="px-4 py-3">Créditos</th>
-                                                <th className="px-4 py-3">Ciclo (Início - Fim)</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {subscriptionHistory.length === 0 ? (
+                                
+                                {isLoadingInvoices ? (
+                                    <div className="flex justify-center py-8">
+                                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                                    </div>
+                                ) : (
+                                    <div className="overflow-x-auto rounded-lg border border-gray-700">
+                                        <table className="w-full text-sm text-left text-gray-400">
+                                            <thead className="text-xs text-gray-200 uppercase bg-gray-700/50">
                                                 <tr>
-                                                    <td colSpan="5" className="px-4 py-8 text-center text-gray-500">
-                                                        Nenhum histórico encontrado.
-                                                    </td>
+                                                    <th className="px-4 py-3">Data</th>
+                                                    <th className="px-4 py-3">Plano</th>
+                                                    <th className="px-4 py-3 text-right">Valor</th>
+                                                    <th className="px-4 py-3 text-center">Status</th>
+                                                    <th className="px-4 py-3 text-right">Ação</th>
                                                 </tr>
-                                            ) : (
-                                                subscriptionHistory.map((item) => (
-                                                    <tr key={item.id} className="bg-gray-800 border-b border-gray-700 hover:bg-gray-750">
-                                                        <td className="px-4 py-3">
-                                                            {new Date(item.created_at).toLocaleDateString()}
-                                                        </td>
-                                                        <td className="px-4 py-3">
-                                                            {item.action_type === 'manual_renewal' ? 'Renovação Manual' : item.action_type}
-                                                        </td>
-                                                        <td className="px-4 py-3 capitalize">
-                                                            {item.plan_snapshot}
-                                                        </td>
-                                                        <td className="px-4 py-3 text-green-400 font-bold">
-                                                            +{item.credits_added}
-                                                        </td>
-                                                        <td className="px-4 py-3 text-xs">
-                                                            {item.period_start ? new Date(item.period_start).toLocaleDateString() : '-'}
-                                                            {' até '}
-                                                            {item.period_end ? new Date(item.period_end).toLocaleDateString() : '-'}
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-700/50">
+                                                {invoices.length === 0 ? (
+                                                    <tr>
+                                                        <td colSpan="5" className="px-4 py-8 text-center text-gray-500 italic">
+                                                            Nenhuma fatura encontrada no Stripe para este usuário.
                                                         </td>
                                                     </tr>
-                                                ))
-                                            )}
-                                        </tbody>
-                                    </table>
-                                </div>
+                                                ) : (
+                                                    invoices.map((inv) => (
+                                                        <tr key={inv.id} className="hover:bg-gray-700/30 transition-colors">
+                                                            <td className="px-4 py-3 font-medium">
+                                                                {new Date(inv.date).toLocaleDateString('pt-BR')}
+                                                            </td>
+                                                            <td className="px-4 py-3">
+                                                                <div className="text-white font-bold">{inv.plan_name}</div>
+                                                                <div className="text-[10px] text-gray-500 uppercase">{inv.number}</div>
+                                                            </td>
+                                                            <td className="px-4 py-3 text-right font-bold text-white">
+                                                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: inv.currency.toUpperCase() }).format(inv.amount)}
+                                                            </td>
+                                                            <td className="px-4 py-3 text-center">
+                                                                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                                                                    inv.status === 'paid' ? 'bg-green-500/20 text-green-400 border border-green-500/30' : 'bg-yellow-500/20 text-yellow-500 border border-yellow-500/30'
+                                                                }`}>
+                                                                    {inv.status === 'paid' ? 'Paga' : inv.status}
+                                                                </span>
+                                                            </td>
+                                                            <td className="px-4 py-3 text-right">
+                                                                {inv.pdf && (
+                                                                    <a href={inv.pdf} target="_blank" rel="noreferrer" className="text-primary hover:underline font-bold text-xs">
+                                                                        Ver PDF
+                                                                    </a>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    ))
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
                             </section>
                         </div>
                     )
@@ -1071,6 +1093,47 @@ const AdminUserDetail = ({ user, onBack }) => {
                                     </form>
                                 </div>
                             </section>
+
+                            <section className="bg-red-500/10 rounded-xl p-6 border border-red-500/20 mt-8">
+                                <h3 className="text-red-400 font-bold mb-4 flex items-center gap-2">
+                                    <Trash2 className="w-5 h-5" />
+                                    Zona de Perigo
+                                </h3>
+                                <p className="text-sm text-gray-400 mb-4">
+                                    Ações nesta área são irreversíveis e devem ser realizadas com cautela.
+                                </p>
+                                <button
+                                    onClick={() => {
+                                        openModal({
+                                            title: 'Excluir Usuário',
+                                            message: `Tem certeza ABSOLUTA que deseja excluir o usuário ${user.email}? Todos os dados, imagens e histórico serão apagados permanentemente.`,
+                                            type: 'error',
+                                            onConfirm: async () => {
+                                                setLoading(true);
+                                                try {
+                                                    const { error } = await supabase.functions.invoke('delete-user', {
+                                                        body: { user_id: user.id }
+                                                    });
+
+                                                    if (error) throw error;
+
+                                                    toast.success("Usuário excluído com sucesso.");
+                                                    onBack();
+                                                } catch (error) {
+                                                    console.error("Delete user error:", error);
+                                                    toast.error(`Falha ao excluir usuário`);
+                                                } finally {
+                                                    if (isMounted.current) setLoading(false);
+                                                }
+                                            }
+                                        });
+                                    }}
+                                    className="w-full py-3 bg-red-500/10 hover:bg-red-500 text-red-500 hover:text-white border border-red-500/50 hover:border-transparent rounded-lg font-bold transition-all flex items-center justify-center gap-2"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                    Excluir Usuário Permanentemente
+                                </button>
+                            </section>
                         </div>
                     )
                 }
@@ -1090,7 +1153,7 @@ const AdminUserDetail = ({ user, onBack }) => {
                                     <button
                                         onClick={handleSaveRegistration}
                                         disabled={loading}
-                                        className="px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
+                                        className="px-4 py-2 bg-primary hover:bg-primary-hover text-black rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
                                     >
                                         Salvar
                                     </button>
@@ -1135,7 +1198,7 @@ const AdminUserDetail = ({ user, onBack }) => {
                                     <button
                                         onClick={handleSaveWhatsapp}
                                         disabled={loading}
-                                        className="px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
+                                        className="px-4 py-2 bg-primary hover:bg-primary-hover text-black rounded-lg text-xs font-bold transition-colors disabled:opacity-50"
                                     >
                                         Salvar
                                     </button>
@@ -1278,7 +1341,7 @@ const AdminUserDetail = ({ user, onBack }) => {
 
                                     <div className="flex gap-3 w-full">
                                         <button onClick={() => setLogoImage(null)} className="flex-1 py-2.5 bg-gray-800 hover:bg-gray-700 text-gray-300 rounded-xl font-medium transition-colors">Cancelar</button>
-                                        <button onClick={handleSaveLogo} disabled={loading} className="flex-1 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-xl font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
+                                        <button onClick={handleSaveLogo} disabled={loading} className="flex-1 py-2.5 bg-primary hover:bg-primary-hover text-black rounded-xl font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
                                             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                                             Salvar Logo
                                         </button>
@@ -1327,7 +1390,7 @@ const AdminUserDetail = ({ user, onBack }) => {
                             <button
                                 onClick={handleStoreUpload}
                                 disabled={loading}
-                                className="px-6 py-2 bg-primary text-white font-bold rounded-lg flex items-center gap-2 disabled:opacity-50 hover:bg-primary-hover"
+                                className="px-6 py-2 bg-primary text-black font-bold rounded-lg flex items-center gap-2 disabled:opacity-50 hover:bg-primary-hover"
                             >
                                 {loading ? 'Salvando...' : 'Salvar'}
                                 {!loading && <Check className="w-4 h-4" />}

@@ -111,6 +111,7 @@ const AdminPanel = () => {
     const [selectedUser, setSelectedUser] = useState(null); // New state for selected user detail view
 
     const [pendingReports, setPendingReports] = useState(0);
+    const [authLoading, setAuthLoading] = useState(true);
     const navigate = useNavigate();
 
     const ADMIN_EMAIL = 'vignatecnologia@gmail.com';
@@ -119,15 +120,16 @@ const AdminPanel = () => {
         const checkAuth = async () => {
             const { data: { user } } = await supabase.auth.getUser();
 
-            const allowedEmails = ['vignatecnologia@gmail.com', 'projeto.getmidia@gmail.com'];
-            if (!user || !allowedEmails.includes(user.email)) {
+            const ADMIN_EMAILS = ['vignatecnologia@gmail.com', 'projeto.getmidia@gmail.com'];
+            if (!user || !ADMIN_EMAILS.includes(user.email)) {
                 toast.error("Acesso não autorizado");
-                navigate('/');
+                navigate('/', { replace: true });
                 return;
             }
 
             fetchUsers();
             fetchReportCount();
+            setAuthLoading(false);
         };
 
         checkAuth();
@@ -162,8 +164,20 @@ const AdminPanel = () => {
             });
 
             if (error) throw error;
-            // The function returns the merged data directly
-            setUsers(data || []);
+
+            // FETCH PROFILES DIRECTLY TO ENSURE GRID STATUS IS CORRECT
+            const { data: profiles } = await supabase.from('profiles').select('id, subscription_status, plan_id, plan');
+            
+            const mergedData = (data || []).map(u => {
+                const profile = profiles?.find(p => p.id === u.id);
+                return {
+                    ...u,
+                    subscription_status: profile?.subscription_status || u.subscription_status || 'inactive',
+                    plan: profile?.plan || profile?.plan_id || u.plan || 'essencial'
+                };
+            });
+
+            setUsers(mergedData);
         } catch (error) {
             console.error('Error fetching users:', error);
             toast.error("Erro ao carregar usuários");
@@ -313,12 +327,12 @@ const AdminPanel = () => {
 
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-    if (loading) {
+    if (loading || authLoading) {
         return (
             <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">
                 <div className="flex flex-col items-center gap-4">
                     <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                    <p>Carregando painel...</p>
+                    <p>{authLoading ? 'Verificando acesso...' : 'Carregando painel...'}</p>
                 </div>
             </div>
         );
@@ -483,6 +497,8 @@ const AdminPanel = () => {
                                                     <tr className="bg-gray-700/50 text-gray-400 text-xs uppercase tracking-wider">
                                                         <th className="p-4 font-semibold">Nome Completo</th>
                                                         <th className="p-4 font-semibold">Email</th>
+                                                        <th className="p-4 font-semibold">Último Acesso</th>
+                                                        <th className="p-4 font-semibold text-center">Status</th>
                                                         <th className="p-4 font-semibold text-center">Créditos</th>
                                                         <th className="p-4 font-semibold text-right">Cadastrado em</th>
                                                         <th className="p-4 font-semibold text-center">Ações</th>
@@ -497,6 +513,25 @@ const AdminPanel = () => {
                                                                 </td>
                                                                 <td className="p-4 text-gray-300">
                                                                     {user.email || '-'}
+                                                                </td>
+                                                                <td className="p-4 text-gray-300 text-sm whitespace-nowrap">
+                                                                    {user.last_active ? new Date(user.last_active).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}
+                                                                </td>
+                                                                <td className="p-4 text-center">
+                                                                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${
+                                                                         (user.subscription_status?.toLowerCase() === 'active' || 
+                                                                          user.subscription_status?.toLowerCase() === 'ativo' ||
+                                                                          user.status?.toLowerCase() === 'active' ||
+                                                                          user.status?.toLowerCase() === 'ativo') ? 'bg-green-500/20 text-green-400' : 
+                                                                         (user.subscription_status?.toLowerCase() === 'past_due' || user.status?.toLowerCase() === 'past_due') ? 'bg-yellow-500/20 text-yellow-400' : 
+                                                                         'bg-red-500/20 text-red-400'
+                                                                     }`}>
+                                                                         {(user.subscription_status?.toLowerCase() === 'active' || 
+                                                                           user.subscription_status?.toLowerCase() === 'ativo' ||
+                                                                           user.status?.toLowerCase() === 'active' ||
+                                                                           user.status?.toLowerCase() === 'ativo') ? 'Ativo' : 
+                                                                          (user.subscription_status?.toLowerCase() === 'past_due' || user.status?.toLowerCase() === 'past_due') ? 'Atrasado' : 'Inativo'}
+                                                                    </span>
                                                                 </td>
                                                                 <td className="p-4 text-center">
                                                                     <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${(user.credits || 0) > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-700 text-gray-400'

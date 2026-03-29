@@ -1,17 +1,56 @@
+
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
 import { useNavigate, Link } from 'react-router-dom';
 import { Coins, User, CreditCard, Calendar, LogOut } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import SubscriptionModal from '../components/SubscriptionModal';
 import { toast } from 'react-hot-toast';
 
 const UserDashboard = () => {
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [isEditingName, setIsEditingName] = useState(false);
-    const [newName, setNewName] = useState('');
+    const [invoices, setInvoices] = useState([]);
+    const [loadingInvoices, setLoadingInvoices] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [editData, setEditData] = useState({
+        full_name: '',
+        phone: '',
+        cpf_cnpj: '',
+        how_did_you_know: '',
+        selected_module: ''
+    });
+    const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
     const navigate = useNavigate();
+    
+    const formatPhone = (value) => {
+        if (!value) return '';
+        const v = value.replace(/\D/g, '');
+        if (v.length > 11) return v.slice(0, 11);
+        return v
+            .replace(/^(\d{2})(\d)/g, '($1) $2')
+            .replace(/(\d)(\d{4})$/, '$1-$2');
+    };
+
+    const formatCpfCnpj = (value) => {
+        if (!value) return '';
+        const v = value.replace(/\D/g, '');
+        if (v.length <= 11) {
+            return v
+                .replace(/(\d{3})(\d)/, '$1.$2')
+                .replace(/(\d{3})(\d)/, '$1.$2')
+                .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
+                .slice(0, 14);
+        } else {
+            return v
+                .replace(/^(\d{2})(\d)/, '$1.$2')
+                .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+                .replace(/\.(\d{3})(\d)/, '.$1/$2')
+                .replace(/(\d{4})(\d)/, '$1-$2')
+                .slice(0, 18);
+        }
+    };
 
     useEffect(() => {
         const getProfileData = async () => {
@@ -26,12 +65,18 @@ const UserDashboard = () => {
                     .from('profiles')
                     .select('*')
                     .eq('id', user.id)
-                    .single();
+                    .maybeSingle();
 
                 if (error) throw error;
 
-                setProfile({ ...profileData, email: user.email });
-                setNewName(profileData.full_name || '');
+                setProfile({ ...profileData, email: user.email, phone: formatPhone(profileData.phone || ''), cpf_cnpj: formatCpfCnpj(profileData.cpf_cnpj || '') });
+                setEditData({
+                    full_name: profileData.full_name || '',
+                    phone: formatPhone(profileData.phone || ''),
+                    cpf_cnpj: formatCpfCnpj(profileData.cpf_cnpj || ''),
+                    how_did_you_know: profileData.how_did_you_know || '',
+                    selected_module: profileData.selected_module || ''
+                });
             } catch (error) {
                 console.error("Unexpected error loading dashboard:", error);
                 toast.error("Erro ao carregar dados do usuário.");
@@ -41,7 +86,21 @@ const UserDashboard = () => {
             }
         };
 
+        const fetchInvoices = async () => {
+            setLoadingInvoices(true);
+            try {
+                const { data, error } = await supabase.functions.invoke('get-invoices');
+                if (error) throw error;
+                setInvoices(data?.invoices || []);
+            } catch (e) {
+                console.error("Error fetching invoices:", e);
+            } finally {
+                setLoadingInvoices(false);
+            }
+        };
+
         getProfileData();
+        fetchInvoices();
     }, [navigate]);
 
     const handleLogout = async () => {
@@ -49,26 +108,32 @@ const UserDashboard = () => {
         navigate('/');
     };
 
-    const handleUpdateName = async () => {
-        if (!newName.trim()) return;
+    const handleUpdateProfile = async () => {
+        if (!editData.full_name.trim()) return;
 
-        const updateToast = toast.loading('Atualizando nome...');
+        const updateToast = toast.loading('Atualizando dados...');
 
         try {
             const { data: { user } } = await supabase.auth.getUser();
             const { error } = await supabase
                 .from('profiles')
-                .update({ full_name: newName })
+                .update({
+                    full_name: editData.full_name,
+                    phone: editData.phone,
+                    cpf_cnpj: editData.cpf_cnpj,
+                    how_did_you_know: editData.how_did_you_know,
+                    selected_module: editData.selected_module
+                })
                 .eq('id', user.id);
 
             if (error) throw error;
 
-            setProfile(prev => ({ ...prev, full_name: newName }));
-            setIsEditingName(false);
-            toast.success('Nome atualizado com sucesso!', { id: updateToast });
+            setProfile(prev => ({ ...prev, ...editData }));
+            setIsEditing(false);
+            toast.success('Dados atualizados com sucesso!', { id: updateToast });
         } catch (error) {
-            console.error("Error updating name:", error);
-            toast.error(`Erro ao atualizar nome`, { id: updateToast });
+            console.error("Error updating profile:", error);
+            toast.error(`Erro ao atualizar dados`, { id: updateToast });
         }
     };
 
@@ -118,41 +183,141 @@ const UserDashboard = () => {
                 <div className="grid md:grid-cols-2 gap-8">
                     {/* User Info Card */}
                     <div className="bg-gray-800 rounded-2xl p-8 border border-gray-700">
-                        <div className="flex items-center gap-4 mb-6">
-                            <div className="bg-gray-700 p-3 rounded-xl">
-                                <User className="w-6 h-6 text-yellow-500" />
+                        <div className="flex justify-between items-center mb-6">
+                            <div className="flex items-center gap-4">
+                                <div className="bg-gray-700 p-3 rounded-xl">
+                                    <User className="w-6 h-6 text-yellow-500" />
+                                </div>
+                                <div>
+                                    <h2 className="text-xl font-semibold">Dados Pessoais</h2>
+                                    <p className="text-gray-400 text-sm">Suas informações de cadastro</p>
+                                </div>
                             </div>
-                            <div>
-                                <h2 className="text-xl font-semibold">Dados Pessoais</h2>
-                                <p className="text-gray-400 text-sm">Suas informações de cadastro</p>
-                            </div>
+                            {!isEditing && (
+                                <button
+                                    onClick={() => setIsEditing(true)}
+                                    className="text-sm text-yellow-500 hover:text-yellow-400 font-bold"
+                                >
+                                    Editar Perfil
+                                </button>
+                            )}
                         </div>
 
-                        <div className="space-y-4">
-                            <div>
-                                <label className="text-xs text-gray-500 uppercase tracking-wider block mb-1">Nome</label>
-                                {isEditingName ? (
-                                    <div className="flex gap-2">
-                                        <input
-                                            type="text"
-                                            value={newName}
-                                            onChange={(e) => setNewName(e.target.value)}
-                                            className="bg-gray-900 border border-gray-700 rounded px-3 py-1 text-white flex-1"
-                                        />
-                                        <button onClick={handleUpdateName} className="text-green-400 font-bold hover:text-green-300">Salvar</button>
-                                        <button onClick={() => setIsEditingName(false)} className="text-gray-500 hover:text-gray-400">Cancelar</button>
+                        <div className="space-y-6">
+                            {isEditing ? (
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="text-xs text-gray-500 uppercase font-bold mb-1 block">Nome Completo</label>
+                                            <input
+                                                type="text"
+                                                value={editData.full_name}
+                                                onChange={(e) => setEditData({ ...editData, full_name: e.target.value })}
+                                                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white outline-none focus:border-yellow-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-gray-500 uppercase font-bold mb-1 block">Telefone</label>
+                                            <input
+                                                type="text"
+                                                value={editData.phone}
+                                                onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
+                                                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white outline-none focus:border-yellow-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-gray-500 uppercase font-bold mb-1 block">CPF</label>
+                                            <input
+                                                type="text"
+                                                value={editData.cpf_cnpj}
+                                                onChange={(e) => setEditData({ ...editData, cpf_cnpj: formatCpfCnpj(e.target.value) })}
+                                                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white outline-none focus:border-yellow-500"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-xs text-gray-500 uppercase font-bold mb-1 block">Módulo Principal</label>
+                                            <select
+                                                value={editData.selected_module}
+                                                onChange={(e) => setEditData({ ...editData, selected_module: e.target.value })}
+                                                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white outline-none focus:border-yellow-500"
+                                            >
+                                                <option value="product">Produto</option>
+                                                <option value="fashion">Moda</option>
+                                                <option value="food">Food</option>
+                                                <option value="auto">Auto</option>
+                                                <option value="optical">Ótica</option>
+                                                <option value="pet">Pet</option>
+                                                <option value="farma">Farma</option>
+                                            </select>
+                                        </div>
+                                        <div className="md:col-span-2">
+                                            <label className="text-xs text-gray-500 uppercase font-bold mb-1 block">Como nos conheceu?</label>
+                                            <select
+                                                value={editData.how_did_you_know}
+                                                onChange={(e) => setEditData({ ...editData, how_did_you_know: e.target.value })}
+                                                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-4 py-2 text-white outline-none focus:border-yellow-500"
+                                            >
+                                                <option value="Facebook">Facebook</option>
+                                                <option value="Instagram">Instagram</option>
+                                                <option value="Google">Google</option>
+                                                <option value="Indicação">Indicação</option>
+                                            </select>
+                                        </div>
                                     </div>
-                                ) : (
-                                    <div className="flex items-center gap-2">
-                                        <p className="font-medium text-lg">{profile?.full_name || 'Usuário'}</p>
-                                        <button onClick={() => setIsEditingName(true)} className="text-xs text-yellow-500 hover:underline">Editar</button>
+                                    <div className="flex gap-3 pt-2">
+                                        <button
+                                            onClick={handleUpdateProfile}
+                                            className="flex-1 bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-2 rounded-lg transition-colors"
+                                        >
+                                            Salvar Alterações
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setIsEditing(false);
+                                                setEditData({
+                                                    full_name: profile.full_name || '',
+                                                    phone: profile.phone || '',
+                                                    cpf_cnpj: profile.cpf_cnpj || '',
+                                                    how_did_you_know: profile.how_did_you_know || '',
+                                                    selected_module: profile.selected_module || ''
+                                                });
+                                            }}
+                                            className="px-6 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 rounded-lg transition-colors"
+                                        >
+                                            Cancelar
+                                        </button>
                                     </div>
-                                )}
-                            </div>
-                            <div>
-                                <label className="text-xs text-gray-500 uppercase tracking-wider">Email</label>
-                                <p className="font-medium text-gray-300">{profile?.email}</p>
-                            </div>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-4">
+                                    <div>
+                                        <label className="text-xs text-gray-500 uppercase tracking-wider block mb-1">Nome Completo</label>
+                                        <p className="font-semibold text-lg">{profile?.full_name || 'Não informado'}</p>
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-gray-500 uppercase tracking-wider block mb-1">E-mail</label>
+                                        <p className="font-medium text-gray-300">{profile?.email}</p>
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-gray-500 uppercase tracking-wider block mb-1">Telefone</label>
+                                        <p className="font-semibold">{profile?.phone || 'Não informado'}</p>
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-gray-500 uppercase tracking-wider block mb-1">CPF</label>
+                                        <p className="font-semibold">{profile?.cpf_cnpj || 'Não informado'}</p>
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-gray-500 uppercase tracking-wider block mb-1">Módulo Selecionado</label>
+                                        <p className="font-bold text-yellow-500 uppercase text-sm">
+                                            {profile?.selected_module || 'Nenhum'}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-gray-500 uppercase tracking-wider block mb-1">Origem</label>
+                                        <p className="font-semibold">{profile?.how_did_you_know || 'Não informado'}</p>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -179,9 +344,12 @@ const UserDashboard = () => {
                                         <span className="text-2xl font-bold text-white">{profile?.credits || 0}</span>
                                     </div>
                                 </div>
-                                <Link to="/#pricing" className="text-sm text-yellow-500 hover:text-yellow-400 font-medium">
+                                <button 
+                                    onClick={() => setIsSubscriptionModalOpen(true)}
+                                    className="text-sm text-yellow-500 hover:text-yellow-400 font-medium bg-gray-900 border border-gray-700 px-4 py-2 rounded-lg transition-all hover:border-yellow-500"
+                                >
                                     Comprar Mais
-                                </Link>
+                                </button>
                             </div>
 
                             <div>
@@ -219,37 +387,110 @@ const UserDashboard = () => {
                                         {profile?.subscription_status === 'active' ? 'Ativo' : 'Inativo'}
                                     </span>
                                 </div>
-
                                 {profile?.subscription_status === 'active' && (
                                     <button
                                         onClick={async () => {
-                                            if (!window.confirm("Deseja realmente cancelar sua assinatura?")) return;
-                                            const tToast = toast.loading("Enviando solicitação...");
+                                            const tToast = toast.loading("Redirecionando para o portal de pagamento...");
                                             try {
-                                                const { data: { user } } = await supabase.auth.getUser();
-                                                const { error } = await supabase.from('tickets').insert({
-                                                    user_id: user.id,
-                                                    type: 'cancellation',
-                                                    description: 'Solicitação de cancelamento enviada pelo usuário via painel.'
-                                                });
+                                                const { data, error } = await supabase.functions.invoke('create-portal');
                                                 if (error) throw error;
-                                                toast.success("Seu pedido de cancelamento foi enviado com sucesso! Aguarde o email de confirmação.", { id: tToast, duration: 5000 });
+                                                
+                                                if (data?.url) {
+                                                    window.location.href = data.url;
+                                                } else {
+                                                    throw new Error("URL do portal não retornada.");
+                                                }
                                             } catch (e) {
                                                 console.error(e);
-                                                toast.error("Erro ao enviar solicitação.", { id: tToast });
+                                                toast.error("Erro ao abrir portal. Tente novamente mais tarde.", { id: tToast });
                                             }
                                         }}
-                                        className="text-xs text-red-400 hover:text-red-300 hover:underline"
+                                        className="text-xs text-red-400 hover:text-red-300 hover:underline flex items-center gap-1"
                                     >
-                                        Cancelar Assinatura
+                                        <span>Gerenciar ou Cancelar Assinatura</span>
                                     </button>
                                 )}
                             </div>
                         </div>
                     </div>
                 </div>
+
+                {/* INVOICE HISTORY SECTION */}
+                <div className="mt-12 bg-gray-800 rounded-2xl p-8 border border-gray-700">
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                            <h2 className="text-xl font-semibold">Histórico de Faturas</h2>
+                            <p className="text-gray-400 text-sm">Acesse seus pagamentos e recibos</p>
+                        </div>
+                    </div>
+
+                    {loadingInvoices ? (
+                        <div className="flex justify-center py-12">
+                            <div className="w-8 h-8 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                    ) : invoices.length > 0 ? (
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left">
+                                <thead>
+                                    <tr className="text-xs text-gray-500 uppercase tracking-wider border-b border-gray-700">
+                                        <th className="pb-4 font-bold">Data</th>
+                                        <th className="pb-4 font-bold">Plano / Descrição</th>
+                                        <th className="pb-4 font-bold">Valor</th>
+                                        <th className="pb-4 font-bold text-center">Status</th>
+                                        <th className="pb-4 font-bold text-right">Recibo</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-700/50">
+                                    {invoices.map((inv) => (
+                                        <tr key={inv.id} className="text-sm">
+                                            <td className="py-4 text-gray-300">{formatDate(inv.date)}</td>
+                                            <td className="py-4">
+                                                <div className="font-medium text-white">{inv.plan_name}</div>
+                                                <div className="text-xs text-gray-500">{inv.number}</div>
+                                            </td>
+                                            <td className="py-4 font-semibold text-white">
+                                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: inv.currency.toUpperCase() }).format(inv.amount)}
+                                            </td>
+                                            <td className="py-4 text-center">
+                                                <span className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-tighter ${
+                                                    inv.status === 'paid' 
+                                                    ? 'bg-green-500/10 text-green-400 border border-green-500/20' 
+                                                    : 'bg-yellow-500/10 text-yellow-500 border border-yellow-500/20'
+                                                }`}>
+                                                    {inv.status === 'paid' ? 'Paga' : inv.status}
+                                                </span>
+                                            </td>
+                                            <td className="py-4 text-right">
+                                                {inv.pdf && (
+                                                    <a 
+                                                        href={inv.pdf} 
+                                                        target="_blank" 
+                                                        rel="noopener noreferrer"
+                                                        className="inline-flex items-center gap-1 text-yellow-500 hover:text-yellow-400 font-medium transition-colors"
+                                                    >
+                                                        PDF
+                                                    </a>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ) : (
+                        <div className="text-center py-12 bg-gray-900/30 rounded-xl border border-dashed border-gray-700">
+                            <p className="text-gray-500">Nenhuma fatura encontrada.</p>
+                        </div>
+                    )}
+                </div>
             </main>
+
             <Footer />
+            
+            <SubscriptionModal 
+                isOpen={isSubscriptionModalOpen} 
+                onClose={() => setIsSubscriptionModalOpen(false)} 
+            />
         </div>
     );
 };

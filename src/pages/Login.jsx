@@ -2,7 +2,7 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
-import { LogIn } from 'lucide-react'
+import { LogIn, Eye, EyeOff } from 'lucide-react'
 
 import logo from '../assets/logo_getmidia.png'
 
@@ -10,8 +10,42 @@ const Login = () => {
   const [loading, setLoading] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState(null)
   const navigate = useNavigate()
+ 
+  React.useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        const admins = ['vignatecnologia@gmail.com', 'projeto.getmidia@gmail.com'];
+        if (admins.includes(session.user.email)) {
+          navigate('/admin', { replace: true });
+        } else {
+          navigate('/minha-conta', { replace: true });
+        }
+      }
+    };
+    checkSession();
+  }, [navigate]);
+
+  const translateAuthError = (msg) => {
+    if (!msg) return "Ocorreu um erro inesperado.";
+    const lowerMsg = msg.toLowerCase();
+    
+    if (lowerMsg.includes("email not confirmed")) {
+      return "Seu e-mail ainda não foi confirmado. Por favor, verifique sua caixa de entrada ou pasta de spam.";
+    }
+    
+    if (lowerMsg.includes("invalid login credentials") || lowerMsg.includes("invalid user")) {
+      return "E-mail ou senha incorretos. Verifique suas credenciais.";
+    }
+    
+    if (lowerMsg.includes("network error") || lowerMsg.includes("failed to fetch")) {
+      return "Erro de conexão. Verifique sua internet.";
+    }
+    return msg;
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault()
@@ -27,17 +61,15 @@ const Login = () => {
       if (error) throw error;
 
       const { user, session } = data;
-      // Note: supabase client handles token/user persistence, but we can keep localStorage if other parts of the app depend on it.
-      // However, it's better to rely on supabase.auth.getSession() where possible.
-
+      
       const admins = ['vignatecnologia@gmail.com', 'projeto.getmidia@gmail.com'];
       if (user && admins.includes(user.email)) {
-        navigate('/admin')
+        navigate('/admin', { replace: true })
       } else {
-        navigate('/minha-conta')
+        navigate('/minha-conta', { replace: true })
       }
     } catch (error) {
-      setError(error.message)
+      setError(translateAuthError(error.message))
     } finally {
       setLoading(false)
     }
@@ -77,14 +109,23 @@ const Login = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-300 mb-2">Senha</label>
-            <input
-              type="password"
-              required
-              className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all"
-              placeholder="••••••••"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                required
+                className="w-full px-4 py-3 bg-gray-900 border border-gray-700 rounded-lg text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none transition-all pr-12"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 focus:outline-none"
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
           </div>
 
           <button
@@ -101,9 +142,9 @@ const Login = () => {
           </button>
         </form>
 
-        {/* <div className="text-center text-sm text-gray-500">
-          Não tem uma conta? <Link to="/register" className="text-primary hover:underline font-medium">Cadastre-se</Link>
-        </div> */}
+        <div className="text-center text-sm text-gray-400 pt-4 border-t border-gray-700/50 mt-6">
+          Não tem uma conta? <Link to="/register" className="text-yellow-500 hover:text-yellow-400 hover:underline font-bold transition-colors">Cadastre-se agora</Link>
+        </div>
       </div>
     </div>
   )

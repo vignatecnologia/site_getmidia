@@ -15,7 +15,7 @@ export const PaymentSuccess = () => {
                     Seus créditos foram adicionados à sua conta com sucesso.
                 </p>
                 <Link
-                    to="/admin"
+                    to="/minha-conta"
                     className="block w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-xl transition-colors"
                 >
                     Ir para o Painel
@@ -55,7 +55,7 @@ export const PaymentPending = () => {
                     Estamos processando seu pagamento (ex: Boleto bancário). Assim que confirmado, seus créditos serão liberados.
                 </p>
                 <Link
-                    to="/admin"
+                    to="/minha-conta"
                     className="block w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-3 px-6 rounded-xl transition-colors"
                 >
                     Voltar ao Painel

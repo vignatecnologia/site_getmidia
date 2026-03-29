@@ -1,40 +1,58 @@
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Menu, X } from 'lucide-react'
+import { Menu, X, User } from 'lucide-react'
+import { supabase } from '../lib/supabase'
 
 const Navbar = () => {
-    const [isOpen, setIsOpen] = React.useState(false)
-    const [session, setSession] = React.useState(null)
+    const [isOpen, setIsOpen] = useState(false)
+    const [session, setSession] = useState(null)
+    const [profile, setProfile] = useState(null)
 
-    React.useEffect(() => {
-        const checkSession = () => {
-            const savedUser = localStorage.getItem('getmidia_user');
-            if (savedUser) {
-                setSession({ user: JSON.parse(savedUser) });
-            } else {
-                setSession(null);
+    useEffect(() => {
+        // 1. Initial session check
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            setSession(session);
+            if (session?.user) {
+                fetchProfile(session.user.id);
             }
-        };
+        });
 
-        checkSession();
+        // 2. Listen for auth changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+            setSession(session);
+            if (session?.user) {
+                fetchProfile(session.user.id);
+            } else {
+                setProfile(null);
+            }
+        });
 
-        // Listen for storage changes in the same window
-        window.addEventListener('storage', checkSession);
+        return () => subscription.unsubscribe();
+    }, []);
 
-        // Polling as a fallback for same-tab updates (storage event only fires on other tabs)
-        const interval = setInterval(checkSession, 1000);
-
-        return () => {
-            window.removeEventListener('storage', checkSession);
-            clearInterval(interval);
-        };
-    }, [])
+    const fetchProfile = async (userId) => {
+        try {
+            const { data, error } = await supabase
+                .from('profiles')
+                .select('full_name')
+                .eq('id', userId)
+                .maybeSingle();
+            
+            if (error) throw error;
+            setProfile(data);
+        } catch (err) {
+            console.error("Error fetching profile for navbar:", err);
+        }
+    }
 
     const handleLogout = async () => {
+        await supabase.auth.signOut();
+        setSession(null);
+        setProfile(null);
+        // Clear legacy storage if any
         localStorage.removeItem('getmidia_token');
         localStorage.removeItem('getmidia_user');
-        setSession(null);
     }
 
     return (
@@ -60,30 +78,39 @@ const Navbar = () => {
                         <div className="flex items-center gap-4">
                             {session ? (
                                 <>
-                                    <span className="text-sm text-gray-300">
-                                        Olá, {session.user.full_name?.split(' ')[0] || 'Usuário'}
-                                    </span>
+                                    <div className="flex items-center gap-2 text-sm text-gray-300 bg-gray-800/50 px-3 py-1.5 rounded-full border border-gray-700">
+                                        <User className="w-4 h-4 text-yellow-500" />
+                                        <span>
+                                            Olá, {profile?.full_name?.split(' ')[0] || session.user.email?.split('@')[0]}
+                                        </span>
+                                    </div>
                                     <Link
                                         to="/minha-conta"
-                                        className="bg-gray-800 border border-gray-700 hover:bg-gray-700 text-white px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                                        className="bg-yellow-500 hover:bg-yellow-400 text-black px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-lg shadow-yellow-500/10"
                                     >
                                         Minha Conta
                                     </Link>
                                     <button
                                         onClick={handleLogout}
-                                        className="text-red-400 hover:text-red-300 px-3 py-2 rounded-md text-sm font-medium transition-colors"
+                                        className="text-gray-400 hover:text-red-400 text-sm font-medium transition-colors px-2"
                                     >
                                         Sair
                                     </button>
                                 </>
                             ) : (
                                 <>
-                                    <Link to="/login" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">Entrar</Link>
-                                    {/* 
-                                    <a href="#pricing" className="bg-primary text-black hover:bg-yellow-400 px-4 py-2 rounded-lg text-sm font-bold transition-all hover:shadow-lg hover:shadow-primary/20">
-                                        Assinar Agora
+                                    <Link 
+                                        to="/login" 
+                                        className="text-gray-300 hover:text-white px-4 py-2 rounded-md text-sm font-medium transition-colors border border-gray-700 hover:border-gray-500"
+                                    >
+                                        Entrar
+                                    </Link>
+                                    <a 
+                                        href="#pricing" 
+                                        className="bg-yellow-500 text-black hover:bg-yellow-400 px-5 py-2 rounded-lg text-sm font-bold transition-all hover:shadow-lg hover:shadow-yellow-500/20"
+                                    >
+                                        Começar Agora
                                     </a>
-                                    */}
                                 </>
                             )}
                         </div>
@@ -101,25 +128,26 @@ const Navbar = () => {
             </div>
 
             {isOpen && (
-                <div className="md:hidden bg-gray-900 border-b border-gray-800">
+                <div className="md:hidden bg-gray-900 border-b border-gray-800 animate-in slide-in-from-top duration-300">
                     <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
                         <Link to="/" className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Início</Link>
                         <Link to="/como-funciona" className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Como funciona</Link>
                         <a href="#features" className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Recursos</a>
                         <a href="#pricing" className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Preços</a>
-                        {session ? (
-                            <>
-                                <Link to="/minha-conta" className="text-yellow-500 hover:text-yellow-400 block px-3 py-2 rounded-md text-base font-medium">Minha Conta</Link>
-                                <button onClick={handleLogout} className="text-red-400 hover:text-red-300 block w-full text-left px-3 py-2 rounded-md text-base font-medium">Sair</button>
-                            </>
-                        ) : (
-                            <>
-                                <Link to="/login" className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Entrar</Link>
-                                {/* 
-                                <a href="#pricing" className="text-primary hover:text-yellow-400 block px-3 py-2 rounded-md text-base font-medium">Assinar Agora</a>
-                                */}
-                            </>
-                        )}
+                        
+                        <div className="pt-4 mt-4 border-t border-gray-800">
+                            {session ? (
+                                <>
+                                    <Link to="/minha-conta" className="text-yellow-500 hover:text-yellow-400 block px-3 py-2 rounded-md text-base font-medium font-bold">Minha Conta</Link>
+                                    <button onClick={handleLogout} className="text-red-400 hover:text-red-300 block w-full text-left px-3 py-2 rounded-md text-base font-medium">Sair</button>
+                                </>
+                            ) : (
+                                <>
+                                    <Link to="/login" className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Entrar</Link>
+                                    <a href="#pricing" className="text-yellow-500 font-bold block px-3 py-2 rounded-md text-base font-medium">Começar Agora</a>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
             )}
