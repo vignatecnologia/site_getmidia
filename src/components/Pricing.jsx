@@ -8,12 +8,25 @@ const Pricing = ({ isModal = false }) => {
     const [loadingPlan, setLoadingPlan] = useState(null)
     const [error, setError] = useState(null)
     const [session, setSession] = useState(null)
+    const [subscriptionStatus, setSubscriptionStatus] = useState(null)
     const navigate = useNavigate()
 
     useEffect(() => {
         const checkSession = async () => {
             const { data: { session } } = await supabase.auth.getSession();
             setSession(session);
+            
+            if (session?.user) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('subscription_status')
+                    .eq('id', session.user.id)
+                    .single();
+                
+                if (profile) {
+                    setSubscriptionStatus(profile.subscription_status);
+                }
+            }
         };
         checkSession();
     }, [])
@@ -184,20 +197,26 @@ const Pricing = ({ isModal = false }) => {
                             ))}
                         </div>
 
-                        <button
-                            onClick={() => handleSubscribe(plan.id)}
-                            disabled={loadingPlan === plan.id}
-                            className={`w-full py-4 rounded-xl font-bold text-center transition-all flex items-center justify-center gap-2 ${plan.popular
-                                ? 'bg-yellow-500 text-black hover:bg-yellow-400 shadow-lg shadow-yellow-500/20'
-                                : 'bg-white text-black hover:bg-gray-200'
-                                } ${loadingPlan === plan.id ? 'opacity-70 cursor-wait' : ''}`}
-                        >
-                            {loadingPlan === plan.id ? (
-                                <Loader2 className="w-5 h-5 animate-spin" />
-                            ) : (
-                                plan.button
-                            )}
-                        </button>
+                        {subscriptionStatus === 'active' ? (
+                            <div className="w-full py-4 rounded-xl font-bold text-center bg-gray-700/50 text-gray-400 border border-gray-600">
+                                Plano Ativo
+                            </div>
+                        ) : (
+                            <button
+                                onClick={() => handleSubscribe(plan.id)}
+                                disabled={loadingPlan === plan.id}
+                                className={`w-full py-4 rounded-xl font-bold text-center transition-all flex items-center justify-center gap-2 ${plan.popular
+                                    ? 'bg-yellow-500 text-black hover:bg-yellow-400 shadow-lg shadow-yellow-500/20'
+                                    : 'bg-white text-black hover:bg-gray-200'
+                                    } ${loadingPlan === plan.id ? 'opacity-70 cursor-wait' : ''}`}
+                            >
+                                {loadingPlan === plan.id ? (
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                ) : (
+                                    plan.button
+                                )}
+                            </button>
+                        )}
                     </div>
                 ))}
             </div>

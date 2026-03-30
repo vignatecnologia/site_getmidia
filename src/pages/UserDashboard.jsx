@@ -6,6 +6,7 @@ import { Coins, User, CreditCard, Calendar, LogOut } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import SubscriptionModal from '../components/SubscriptionModal';
+import CreditPackageModal from '../components/CreditPackageModal';
 import { toast } from 'react-hot-toast';
 
 const UserDashboard = () => {
@@ -22,6 +23,7 @@ const UserDashboard = () => {
         selected_module: ''
     });
     const [isSubscriptionModalOpen, setIsSubscriptionModalOpen] = useState(false);
+    const [isCreditPackageModalOpen, setIsCreditPackageModalOpen] = useState(false);
     const navigate = useNavigate();
     
     const formatPhone = (value) => {
@@ -345,10 +347,16 @@ const UserDashboard = () => {
                                     </div>
                                 </div>
                                 <button 
-                                    onClick={() => setIsSubscriptionModalOpen(true)}
+                                    onClick={() => {
+                                        if (profile?.subscription_status === 'active') {
+                                            setIsCreditPackageModalOpen(true);
+                                        } else {
+                                            setIsSubscriptionModalOpen(true);
+                                        }
+                                    }}
                                     className="text-sm text-yellow-500 hover:text-yellow-400 font-medium bg-gray-900 border border-gray-700 px-4 py-2 rounded-lg transition-all hover:border-yellow-500"
                                 >
-                                    Comprar Mais
+                                    {profile?.subscription_status === 'active' ? 'Comprar Mais' : 'Assinar um plano'}
                                 </button>
                             </div>
 
@@ -490,6 +498,11 @@ const UserDashboard = () => {
             <SubscriptionModal 
                 isOpen={isSubscriptionModalOpen} 
                 onClose={() => setIsSubscriptionModalOpen(false)} 
+            />
+
+            <CreditPackageModal 
+                isOpen={isCreditPackageModalOpen} 
+                onClose={() => setIsCreditPackageModalOpen(false)} 
             />
         </div>
     );
