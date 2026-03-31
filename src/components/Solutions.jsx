@@ -137,18 +137,7 @@ const Solutions = () => {
                     ))}
                 </div>
 
-                <div className="mt-16 text-center">
-                    <p className="text-gray-400 text-lg mb-6">
-                        Tem uma ídeia para um novo GetMídia?
-                    </p>
-                    <a
-                        href="#contact"
-                        className="inline-flex items-center gap-2 px-8 py-4 bg-gray-800 text-white rounded-xl font-bold text-lg hover:bg-gray-700 transition-all border border-gray-700 hover:border-primary/50"
-                    >
-                        <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                        Fale Conosco
-                    </a>
-                </div>
+                
             </div>
         </section>
     )

@@ -14,9 +14,14 @@ import GetmidiaOtica from './pages/GetmidiaOtica'
 import GetmidiaPet from './pages/GetmidiaPet'
 import GetmidiaFarma from './pages/GetmidiaFarma'
 import HowItWorks from './pages/HowItWorks'
+import PrivacyPolicy from './pages/PrivacyPolicy'
+import TermsOfUse from './pages/TermsOfUse'
+import CookiePolicy from './pages/CookiePolicy'
 import { PaymentSuccess, PaymentFailure, PaymentPending } from './pages/PaymentReturn'
 import UserDashboard from './pages/UserDashboard'
 import ScrollToTop from './components/ScrollToTop'
+import WhatsappButton from './components/WhatsappButton' // Add this import
+import CookieBanner from './components/CookieBanner'
 
 import { Toaster } from 'react-hot-toast'
 
@@ -30,6 +35,8 @@ function App() {
         },
       }} />
       <ScrollToTop />
+      <WhatsappButton /> {/* Add the button here */}
+      <CookieBanner />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/produto" element={<GetmidiaProduct />} />
@@ -43,6 +50,9 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/admin" element={<AdminPanel />} />
+        <Route path="/politica-de-privacidade" element={<PrivacyPolicy />} />
+        <Route path="/termos-de-uso" element={<TermsOfUse />} />
+        <Route path="/politica-de-cookies" element={<CookiePolicy />} />
 
         {/* Payment Return Routes */}
         <Route path="/payment-success" element={<PaymentSuccess />} />

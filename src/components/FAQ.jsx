@@ -29,7 +29,7 @@ const faqs = [
     },
     {
         question: "Terei acesso à todos os GetMídias?",
-        answer: "Sim! Sua assinatura garante acesso total a todas as ferramentas: Produto, Moda, Food, Auto, Ótica e Pet, podendo usar seus créditos livremente entre elas."
+        answer: "Ao se cadastrar você escolhe um dos módulos disponíveis. Se quiser pode solicitar acesso à outros módulos. Os créditos servirão para todos os módulos ativos."
     },
     {
         question: "Qual a qualidade das imagens geradas?",

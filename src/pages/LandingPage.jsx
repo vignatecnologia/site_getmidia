@@ -7,7 +7,6 @@ import Solutions from '../components/Solutions'
 import Testimonials from '../components/Testimonials'
 import Pricing from '../components/Pricing'
 import FAQ from '../components/FAQ'
-import Contact from '../components/Contact'
 import Footer from '../components/Footer'
 
 const LandingPage = () => {
@@ -21,7 +20,6 @@ const LandingPage = () => {
             <Testimonials />
             <Pricing />
             <FAQ />
-            <Contact />
             <Footer />
         </div>
     )

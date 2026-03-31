@@ -1,14 +1,14 @@
 
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowUp } from 'lucide-react'
+import { ArrowUp, Facebook, Instagram } from 'lucide-react'
 
 const Footer = () => {
     return (
         <footer className="bg-gray-900 border-t border-gray-800 pt-16 pb-8">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-                    <div className="col-span-1 md:col-span-1">
+                    <div className="col-span-1">
                         <Link to="/" className="flex items-center gap-2 mb-4">
                             <img src="/logo-new.png" alt="GetMídia Logo" className="h-[55px] w-auto" />
                         </Link>
@@ -27,20 +27,24 @@ const Footer = () => {
                     </div>
 
                     <div>
-                        <h3 className="text-white font-bold mb-4">Empresa</h3>
+                        <h3 className="text-white font-bold mb-4">Legal</h3>
                         <ul className="space-y-2 text-sm text-gray-400">
-                            <li><a href="#" className="hover:text-primary transition-colors">Sobre Nós</a></li>
-                            <li><a href="#" className="hover:text-primary transition-colors">Blog</a></li>
-                            <li><a href="#" className="hover:text-primary transition-colors">Contato</a></li>
+                            <li><Link to="/termos-de-uso" className="hover:text-primary transition-colors">Termos de Uso</Link></li>
+                            <li><Link to="/politica-de-privacidade" className="hover:text-primary transition-colors">Política de Privacidade</Link></li>
+                            <li><Link to="/politica-de-cookies" className="hover:text-primary transition-colors">Política de Cookies</Link></li>
                         </ul>
                     </div>
 
                     <div>
-                        <h3 className="text-white font-bold mb-4">Legal</h3>
-                        <ul className="space-y-2 text-sm text-gray-400">
-                            <li><a href="#" className="hover:text-primary transition-colors">Termos de Uso</a></li>
-                            <li><a href="#" className="hover:text-primary transition-colors">Privacidade</a></li>
-                        </ul>
+                        <h3 className="text-white font-bold mb-4">Siga-nos</h3>
+                        <div className="flex gap-4">
+                            <a href="#" className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center text-gray-400 hover:bg-primary hover:text-black transition-all group" title="Facebook">
+                                <Facebook className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                            </a>
+                            <a href="#" className="w-10 h-10 bg-gray-800 rounded-lg flex items-center justify-center text-gray-400 hover:bg-primary hover:text-black transition-all group" title="Instagram">
+                                <Instagram className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                            </a>
+                        </div>
                     </div>
                 </div>
 
@@ -56,7 +60,7 @@ const Footer = () => {
 
                     <button
                         onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                        className="bg-gray-800 hover:bg-primary hover:text-black text-white p-3 rounded-full transition-all group"
+                        className="bg-gray-800 hover:bg-primary hover:text-black text-white p-3 rounded-full transition-all group mr-16"
                         title="Voltar ao topo"
                     >
                         <ArrowUp className="w-5 h-5 group-hover:-translate-y-1 transition-transform" />
