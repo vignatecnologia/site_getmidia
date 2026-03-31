@@ -41,8 +41,7 @@ const Pricing = ({ isModal = false }) => {
             const { data: { session: currentSession }, error: sessionError } = await supabase.auth.getSession();
             
             if (sessionError || !currentSession) {
-                setError("Sessão expirada. Por favor, faça login novamente.");
-                setTimeout(() => navigate('/login'), 2000);
+                navigate('/login');
                 return;
             }
 
