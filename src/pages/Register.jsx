@@ -98,6 +98,13 @@ const Register = () => {
                 throw new Error("As senhas não coincidem.");
             }
 
+            if (!formData.firstName.trim()) throw new Error("Por favor, informe seu nome.");
+            if (!formData.lastName.trim()) throw new Error("Por favor, informe seu sobrenome.");
+            if (!formData.email.trim()) throw new Error("Por favor, informe seu e-mail.");
+            if (!formData.phone.trim()) throw new Error("Por favor, informe seu celular.");
+            if (!formData.cpfCnpj.trim()) throw new Error("Por favor, informe seu CPF/CNPJ.");
+            if (!formData.password.trim()) throw new Error("Por favor, escolha uma senha.");
+            if (!formData.confirmPassword.trim()) throw new Error("Por favor, confirme sua senha.");
             if (!formData.howDidYouKnow) throw new Error("Por favor, selecione como nos conheceu.");
             if (!formData.selectedModule) throw new Error("Por favor, selecione qual módulo deseja usar.");
 
@@ -167,7 +174,7 @@ const Register = () => {
                 <form className="grid grid-cols-1 md:grid-cols-2 gap-4" onSubmit={handleRegister}>
                     {/* Nome e Sobrenome */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1">Nome</label>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1">Nome <span className="text-red-500">*</span></label>
                         <input
                             type="text"
                             name="firstName"
@@ -179,7 +186,7 @@ const Register = () => {
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1">Sobrenome</label>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1">Sobrenome <span className="text-red-500">*</span></label>
                         <input
                             type="text"
                             name="lastName"
@@ -193,7 +200,7 @@ const Register = () => {
 
                     {/* Email */}
                     <div className="md:col-span-2">
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1">E-mail</label>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1">E-mail <span className="text-red-500">*</span></label>
                         <input
                             type="email"
                             name="email"
@@ -207,7 +214,7 @@ const Register = () => {
 
                     {/* CPF e Telefone */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1">CPF</label>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1">CPF <span className="text-red-500">*</span></label>
                         <input
                             type="text"
                             name="cpfCnpj"
@@ -220,7 +227,7 @@ const Register = () => {
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1">CeluLar</label>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1">CeluLar <span className="text-red-500">*</span></label>
                         <input
                             type="tel"
                             name="phone"
@@ -235,7 +242,7 @@ const Register = () => {
 
                     {/* Senha e Confirmação */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1">Senha</label>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1">Senha <span className="text-red-500">*</span></label>
                         <div className="relative">
                             <input
                                 type={showPassword ? "text" : "password"}
@@ -256,7 +263,7 @@ const Register = () => {
                         </div>
                     </div>
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1">Repetir Senha</label>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1">Repetir Senha <span className="text-red-500">*</span></label>
                         <div className="relative">
                             <input
                                 type={showConfirmPassword ? "text" : "password"}
@@ -279,7 +286,7 @@ const Register = () => {
 
                     {/* Dropdowns */}
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1">Como nos conheceu?</label>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1">Como nos conheceu? <span className="text-red-500">*</span></label>
                         <div className="relative">
                             <select
                                 name="howDidYouKnow"
@@ -299,7 +306,7 @@ const Register = () => {
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1">Módulo de Acesso</label>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1 ml-1">Módulo de Acesso <span className="text-red-500">*</span></label>
                         <div className="relative">
                             <select
                                 name="selectedModule"
