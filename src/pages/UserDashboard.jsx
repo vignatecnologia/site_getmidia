@@ -338,6 +338,11 @@ const UserDashboard = () => {
                         </div>
 
                         <div className="space-y-6 relative z-10">
+                            {profile?.subscription_status === 'canceled' && (
+                                <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl text-sm animate-pulse">
+                                    <strong>Atenção:</strong> Sua assinatura está cancelada.
+                                </div>
+                            )}
                             <div className="flex items-center justify-between bg-gray-900/50 p-4 rounded-xl border border-gray-700">
                                 <div>
                                     <label className="text-xs text-gray-500 uppercase tracking-wider block mb-1">Créditos Disponíveis</label>
@@ -390,12 +395,12 @@ const UserDashboard = () => {
                                     <span className="text-sm text-gray-400 block mb-1">Status</span>
                                     <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${profile?.subscription_status === 'active'
                                         ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                                        : 'bg-gray-700 text-gray-400'
+                                        : profile?.subscription_status === 'canceled' ? 'bg-red-500/20 text-red-400 border border-red-500/30' : 'bg-gray-700 text-gray-400'
                                         }`}>
-                                        {profile?.subscription_status === 'active' ? 'Ativo' : 'Inativo'}
+                                        {profile?.subscription_status === 'active' ? 'Ativo' : (profile?.subscription_status === 'canceled' ? 'Cancelado' : 'Inativo')}
                                     </span>
                                 </div>
-                                {profile?.subscription_status === 'active' && (
+                                {(profile?.subscription_status === 'active' || profile?.subscription_status === 'canceled') && (
                                     <button
                                         onClick={async () => {
                                             const tToast = toast.loading("Redirecionando para o portal de pagamento...");
@@ -415,7 +420,7 @@ const UserDashboard = () => {
                                         }}
                                         className="text-xs text-red-400 hover:text-red-300 hover:underline flex items-center gap-1"
                                     >
-                                        <span>Gerenciar ou Cancelar Assinatura</span>
+                                        <span>{profile?.subscription_status === 'active' ? 'Gerenciar ou Cancelar Assinatura' : 'Gerenciar ou Reativar Assinatura'}</span>
                                     </button>
                                 )}
                             </div>
