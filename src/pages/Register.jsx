@@ -134,15 +134,25 @@ const Register = () => {
                 return;
             }
 
-            // Notice: Manual profile upsert removed. Handled by Supabase Trigger.
-            toast.success("Parabéns! Sua conta foi criada com sucesso.", {
-                duration: 6000,
-            });
-            
-            setError("CADASTRO REALIZADO: Enviamos um link de ativação para o seu e-mail. Por favor, acesse sua caixa de entrada (e spam) para ativar sua conta antes de entrar.");
-            
-            // Redirection logic
-            setTimeout(() => navigate('/login'), 5000);
+            // Detect if email confirmation is disabled (session exists immediately)
+            if (authData.session) {
+                toast.success("Parabéns! Sua conta foi criada e logada com sucesso.", {
+                    duration: 4000,
+                });
+                
+                // Redirection to account dashboard
+                setTimeout(() => navigate('/minha-conta'), 2000);
+            } else {
+                // Confirmation is required
+                toast.success("Conta criada com sucesso! Verifique seu e-mail.", {
+                    duration: 6000,
+                });
+                
+                setError("CADASTRO REALIZADO: Enviamos um link de ativação para o seu e-mail. Por favor, acesse sua caixa de entrada (e spam) para ativar sua conta antes de entrar.");
+                
+                // Redirection to login
+                setTimeout(() => navigate('/login'), 5000);
+            }
 
         } catch (error) {
             console.error("Erro no cadastro:", error);

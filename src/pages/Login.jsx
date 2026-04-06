@@ -16,14 +16,26 @@ const Login = () => {
  
   React.useEffect(() => {
     const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const admins = ['vignatecnologia@gmail.com', 'projeto.getmidia@gmail.com'];
-        if (admins.includes(session.user.email)) {
-          navigate('/admin', { replace: true });
-        } else {
-          navigate('/minha-conta', { replace: true });
+      try {
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        
+        if (sessionError) {
+          console.error("Erro ao recuperar sessão:", sessionError.message);
+          // Se houver erro de token inválido, limpamos para permitir novo login
+          await supabase.auth.signOut();
+          return;
         }
+
+        if (session) {
+          const admins = ['vignatecnologia@gmail.com', 'projeto.getmidia@gmail.com'];
+          if (admins.includes(session.user.email)) {
+            navigate('/admin', { replace: true });
+          } else {
+            navigate('/minha-conta', { replace: true });
+          }
+        }
+      } catch (err) {
+        console.error("Erro inesperado na sessão:", err);
       }
     };
     checkSession();

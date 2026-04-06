@@ -1055,10 +1055,14 @@ const AdminUserDetail = ({ user, onBack }) => {
                                             onConfirm: async () => {
                                                 setLoading(true);
                                                 try {
+                                                    const { data: { session } } = await supabase.auth.getSession();
                                                     const { error } = await supabase.functions.invoke('update-user', {
                                                         body: {
                                                             user_id: user.id,
                                                             password: newPass
+                                                        },
+                                                        headers: {
+                                                            'x-supabase-auth': session?.access_token
                                                         }
                                                     });
 
@@ -1111,8 +1115,12 @@ const AdminUserDetail = ({ user, onBack }) => {
                                             onConfirm: async () => {
                                                 setLoading(true);
                                                 try {
+                                                    const { data: { session } } = await supabase.auth.getSession();
                                                     const { error } = await supabase.functions.invoke('delete-user', {
-                                                        body: { user_id: user.id }
+                                                        body: { user_id: user.id },
+                                                        headers: {
+                                                            'x-supabase-auth': session?.access_token
+                                                        }
                                                     });
 
                                                     if (error) throw error;
