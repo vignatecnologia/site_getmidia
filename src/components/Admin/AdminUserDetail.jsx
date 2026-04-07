@@ -1055,16 +1055,17 @@ const AdminUserDetail = ({ user, onBack }) => {
                                             onConfirm: async () => {
                                                 setLoading(true);
                                                 try {
-                                                    const { data: { session } } = await supabase.auth.getSession();
-                                                    const { error } = await supabase.functions.invoke('update-user', {
+                                                    const { data, error } = await supabase.functions.invoke('update-user', {
                                                         body: {
                                                             user_id: user.id,
                                                             password: newPass
-                                                        },
-                                                        headers: {
-                                                            'x-supabase-auth': session?.access_token
                                                         }
                                                     });
+
+                                                    if (error) {
+                                                        console.error("Update password function error details:", error);
+                                                        throw error;
+                                                    }
 
                                                     if (error) throw error;
 
@@ -1115,21 +1116,31 @@ const AdminUserDetail = ({ user, onBack }) => {
                                             onConfirm: async () => {
                                                 setLoading(true);
                                                 try {
-                                                    const { data: { session } } = await supabase.auth.getSession();
-                                                    const { error } = await supabase.functions.invoke('delete-user', {
-                                                        body: { user_id: user.id },
-                                                        headers: {
-                                                            'x-supabase-auth': session?.access_token
-                                                        }
+                                                    const { data, error } = await supabase.functions.invoke('delete-user', {
+                                                        body: { user_id: user.id }
                                                     });
 
-                                                    if (error) throw error;
+                                                    if (error) {
+                                                        console.error("Delete user function error:", error);
+                                                        // Extract the actual response body
+                                                        if (error.context) {
+                                                            try {
+                                                                const errorBody = await error.context.json();
+                                                                console.error("=== SERVER RESPONSE BODY ===", errorBody);
+                                                                toast.error(`Erro: ${errorBody?.error || errorBody?.message || 'Erro desconhecido'}`);
+                                                            } catch (e) {
+                                                                const errorText = await error.context.text();
+                                                                console.error("=== SERVER RESPONSE TEXT ===", errorText);
+                                                            }
+                                                        }
+                                                        throw error;
+                                                    }
 
                                                     toast.success("Usuário excluído com sucesso.");
                                                     onBack();
                                                 } catch (error) {
                                                     console.error("Delete user error:", error);
-                                                    toast.error(`Falha ao excluir usuário`);
+                                                    if (!error.context) toast.error(`Falha ao excluir usuário`);
                                                 } finally {
                                                     if (isMounted.current) setLoading(false);
                                                 }

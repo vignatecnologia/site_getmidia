@@ -71,18 +71,33 @@ const UserDashboard = () => {
 
                 if (error) throw error;
 
-                setProfile({ ...profileData, email: user.email, phone: formatPhone(profileData.phone || ''), cpf_cnpj: formatCpfCnpj(profileData.cpf_cnpj || '') });
+                // 3. Prepare display data (using database record or fallback to Auth metadata)
+                const metadata = user.user_metadata || {};
+                const finalProfile = {
+                    ...profileData,
+                    email: user.email,
+                    full_name: profileData?.full_name || metadata.full_name || 'Usuário',
+                    phone: formatPhone(profileData?.phone || metadata.phone || ''),
+                    cpf_cnpj: formatCpfCnpj(profileData?.cpf_cnpj || metadata.cpf_cnpj || ''),
+                    how_did_you_know: profileData?.how_did_you_know || metadata.how_did_you_know || '',
+                    selected_module: profileData?.selected_module || metadata.selected_module || ''
+                };
+                
+                setProfile(finalProfile);
                 setEditData({
-                    full_name: profileData.full_name || '',
-                    phone: formatPhone(profileData.phone || ''),
-                    cpf_cnpj: formatCpfCnpj(profileData.cpf_cnpj || ''),
-                    how_did_you_know: profileData.how_did_you_know || '',
-                    selected_module: profileData.selected_module || ''
+                    full_name: finalProfile.full_name,
+                    phone: finalProfile.phone,
+                    cpf_cnpj: finalProfile.cpf_cnpj,
+                    how_did_you_know: finalProfile.how_did_you_know,
+                    selected_module: finalProfile.selected_module
                 });
             } catch (error) {
                 console.error("Unexpected error loading dashboard:", error);
                 toast.error("Erro ao carregar dados do usuário.");
-                navigate('/login');
+                // Se o erro não for apenas a falta do perfil, voltamos pro login
+                if (error.message && !error.message.includes("profiles")) {
+                    navigate('/login');
+                }
             } finally {
                 setLoading(false);
             }
