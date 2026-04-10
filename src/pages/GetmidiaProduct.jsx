@@ -4,7 +4,8 @@ import Footer from '../components/Footer'
 import { motion } from 'framer-motion'
 import { Box, CheckCircle, Zap, Image as ImageIcon, ArrowRight, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import heroDemoImage from '../assets/hero_produto_demo.png'
+import { supabase } from '../lib/supabase'
+import antesDepoisProduto from '../assets/antes_depois_produto.png'
 
 const features = [
     {
@@ -24,8 +25,6 @@ const features = [
         description: "Gere imagens já nos formatos ideais para Stories, Feed ou Banners de e-commerce."
     }
 ]
-
-import { supabase } from '../lib/supabase'
 
 const galleryItems = []
 
@@ -121,17 +120,13 @@ const GetmidiaProduct = () => {
                             transition={{ duration: 0.6, delay: 0.2 }}
                             className="relative"
                         >
-                            {/* Product Demo Image */}
                             <div className="aspect-square relative flex items-center justify-center">
-                                <img src={heroDemoImage} alt="Demonstração do Produto" className="w-full h-full object-contain" />
+                                <img src={antesDepoisProduto} alt="Antes e Depois Produto" className="w-full h-full object-contain" />
                             </div>
                         </motion.div>
                     </div>
                 </div>
             </section>
-
-
-
 
             {/* Features Grid */}
             <section className="py-20 bg-gray-950">
@@ -176,8 +171,6 @@ const GetmidiaProduct = () => {
                                 </div>
                             </div>
                         ))}
-
-
                     </div>
                 </div>
             </section>

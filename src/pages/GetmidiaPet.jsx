@@ -6,23 +6,31 @@ import { PawPrint, CheckCircle, Zap, ArrowRight, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
 import heroPetDemo from '../assets/hero_pet_demo.png'
+import modelosImg from '../assets/modelos.jpg'
+import cenarioImg from '../assets/cenario.jpg'
+import pelagemImg from '../assets/pelagem.jpg'
+import fofuraImg from '../assets/fofura.jpg'
 
 const features = [
     {
         title: "Modelos Animais",
-        description: "Transforme seu pet em um supermodelo ou use nossos modelos gerados por IA."
+        description: "Transforme seu pet em um supermodelo ou use nossos modelos gerados por IA.",
+        image: modelosImg
     },
     {
         title: "Cenários Divertidos",
-        description: "Parques, estúdios, festas de aniversário pet e muito mais."
+        description: "Parques, estúdios, festas de aniversário pet e muito mais.",
+        image: cenarioImg
     },
     {
         title: "Pelagem Realista",
-        description: "A IA entende e preserva a textura e as cores da pelagem do animal."
+        description: "A IA entende e preserva a textura e as cores da pelagem do animal.",
+        image: pelagemImg
     },
     {
         title: "Fofura Garantida",
-        description: "Aumente o engajamento das suas redes sociais com fotos incrivelmente fofas."
+        description: "Aumente o engajamento das suas redes sociais com fotos incrivelmente fofas.",
+        image: fofuraImg
     }
 ]
 
@@ -133,9 +141,9 @@ const GetmidiaPet = () => {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
                         {features.map((feature, index) => (
-                            <div key={index} className="p-6 bg-gray-900 rounded-2xl border border-gray-800 hover:border-green-500/30 transition-colors">
-                                <div className="w-12 h-12 bg-green-500/10 rounded-lg flex items-center justify-center mb-4 text-green-500">
-                                    <Zap className="w-6 h-6" />
+                            <div key={index} className="p-6 bg-gray-900 rounded-2xl border border-gray-800 hover:border-green-500/30 transition-colors group">
+                                <div className="w-32 h-32 bg-gray-800 rounded-2xl flex items-center justify-center mb-6 overflow-hidden border border-gray-700 group-hover:border-green-500/30 transition-colors shadow-xl">
+                                    <img src={feature.image} alt={feature.title} className="w-full h-full object-cover" />
                                 </div>
                                 <h3 className="text-lg font-bold mb-2 text-white">{feature.title}</h3>
                                 <p className="text-gray-400 text-sm leading-relaxed">{feature.description}</p>

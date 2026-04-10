@@ -5,23 +5,32 @@ import { motion } from 'framer-motion'
 import { Utensils, CheckCircle, Zap, ArrowRight, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { supabase } from '../lib/supabase'
+import antesDepoisFood from '../assets/antes_depois_food.png'
+import apetitosoImg from '../assets/apetitoso_e_real.jpg'
+import cenarioFoodImg from '../assets/cenarios_gastronomicos.jpg'
+import estiloImg from '../assets/estilo_profissional.jpg'
+import vendasFoodImg from '../assets/food_vendas.png'
 
 const features = [
     {
         title: "Apetitoso & Real",
-        description: "Iluminação ajustada para realçar a textura, o brilho e as cores dos alimentos."
+        description: "Iluminação ajustada para realçar a textura, o brilho e as cores dos alimentos.",
+        image: apetitosoImg
     },
     {
         title: "Cenários Gastronômicos",
-        description: "Mesas rústicas, ambientes de restaurante, piqueniques ao ar livre e muito mais."
+        description: "Mesas rústicas, ambientes de restaurante, piqueniques ao ar livre e muito mais.",
+        image: cenarioFoodImg
     },
     {
         title: "Estilo Profissional",
-        description: "Fotos com aparência de editorial de revista de culinária, criadas em segundos."
+        description: "Fotos com aparência de editorial de revista de culinária, criadas em segundos.",
+        image: estiloImg
     },
     {
         title: "Aumente as Vendas",
-        description: "Cardápios com fotos atraentes vendem mais. Transforme seu menu agora."
+        description: "Cardápios com fotos atraentes vendem mais. Transforme seu menu agora.",
+        image: vendasFoodImg
     }
 ]
 
@@ -119,22 +128,8 @@ const GetmidiaFood = () => {
                             transition={{ duration: 0.6, delay: 0.2 }}
                             className="relative"
                         >
-                            {/* Placeholder for Product Demo Image/Animation */}
-                            <div className="aspect-square rounded-3xl bg-gray-800 border border-gray-700 overflow-hidden relative shadow-2xl shadow-black/50 group">
-                                <div className="absolute inset-0 bg-gradient-to-br from-red-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <img src="/logo-food-v2.png" alt="Demo" className="w-32 h-32 object-contain opacity-50" />
-                                </div>
-                                {/* Mock UI Elements */}
-                                <div className="absolute bottom-6 left-6 right-6 bg-gray-900/90 backdrop-blur-md p-4 rounded-xl border border-gray-700">
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                                        <span className="text-xs font-mono text-green-500">AI COOKING...</span>
-                                    </div>
-                                    <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                                        <div className="h-full bg-red-500 w-[70%]" />
-                                    </div>
-                                </div>
+                            <div className="aspect-square relative flex items-center justify-center">
+                                <img src={antesDepoisFood} alt="Antes e Depois Food" className="w-full h-full object-contain" />
                             </div>
                         </motion.div>
                     </div>
@@ -146,9 +141,9 @@ const GetmidiaFood = () => {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
                         {features.map((feature, index) => (
-                            <div key={index} className="p-6 bg-gray-900 rounded-2xl border border-gray-800 hover:border-red-500/30 transition-colors">
-                                <div className="w-12 h-12 bg-red-500/10 rounded-lg flex items-center justify-center mb-4 text-red-500">
-                                    <Zap className="w-6 h-6" />
+                            <div key={index} className="p-6 bg-gray-900 rounded-2xl border border-gray-800 hover:border-red-500/30 transition-colors group">
+                                <div className="w-32 h-32 bg-gray-800 rounded-2xl flex items-center justify-center mb-6 overflow-hidden border border-gray-700 group-hover:border-red-500/30 transition-colors shadow-xl">
+                                    <img src={feature.image} alt={feature.title} className="w-full h-full object-cover" />
                                 </div>
                                 <h3 className="text-lg font-bold mb-2 text-white">{feature.title}</h3>
                                 <p className="text-gray-400 text-sm leading-relaxed">{feature.description}</p>

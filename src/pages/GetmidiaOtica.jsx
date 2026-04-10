@@ -2,26 +2,26 @@ import React from 'react'
 import Navbar from '../components/Navbar'
 import Footer from '../components/Footer'
 import { motion } from 'framer-motion'
-import { Glasses, CheckCircle, Zap, ArrowRight, X } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Box, CheckCircle, Zap, Image as ImageIcon, ArrowRight, X, Glasses } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import antesDepoisOtica from '../assets/antes_depois_otica.png'
 
 const features = [
     {
-        title: "Modelos Reais",
-        description: "Diversidade de rostos para seus clientes se identificarem com seus óculos."
+        title: "Destaque nas Armações",
+        description: "Realce texturizações, metais e o brilho das lentes com iluminação realista que valoriza o design de cada óculos."
     },
     {
-        title: "Ajuste na Face",
-        description: "Encaixe perfeito da armação no rosto do modelo gerado pela IA."
+        title: "Provador Virtual na Foto",
+        description: "Nossa IA aplica os óculos no rosto de modelos com perfeição, respeitando a perspectiva e a profundidade."
     },
     {
-        title: "Reflexos de Lente",
-        description: "Simulação realista de lentes com reflexos naturais de ambiente e luz."
+        title: "Cenários de Lifestyle",
+        description: "Coloque suas peças em ambientes sofisticados, praias ensolaradas ou editoriais de moda urbana em segundos."
     },
     {
-        title: "Catalogação Rápida",
-        description: "Fotografe apenas os óculos e deixe a IA criar todo o material de marketing."
+        title: "Alta Fidelidade Visual",
+        description: "Preservação absoluta das cores originais e dos detalhes da marca em cada armação gerada."
     }
 ]
 
@@ -65,7 +65,7 @@ const GetmidiaOtica = () => {
 
             {/* Hero Section */}
             <section className="pt-32 pb-20 relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-[50%] h-full bg-teal-500/5 blur-3xl rounded-l-full" />
+                <div className="absolute top-0 right-0 w-[50%] h-full bg-cyan-500/5 blur-3xl rounded-l-full" />
 
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
                     <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -74,20 +74,20 @@ const GetmidiaOtica = () => {
                             animate={{ opacity: 1, x: 0 }}
                             transition={{ duration: 0.6 }}
                         >
-                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-teal-500/10 border border-teal-500/20 text-teal-500 font-medium mb-6">
+                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 font-medium mb-6">
                                 <Glasses className="w-4 h-4" />
                                 <span>GetMídia Ótica</span>
                             </div>
                             <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-                                Experimente o futuro da <span className="text-teal-500">experiência ótica</span>
+                                Seus óculos em <span className="text-cyan-400">foco total</span>
                             </h1>
                             <p className="text-xl text-gray-400 mb-8 leading-relaxed">
-                                Mostre seus óculos em rostos reais sem precisar contratar modelos. Crie campanhas diversas e inclusivas em minutos.
+                                Crie fotos publicitárias profissionais para óculos de sol e de grau. Perfeito para vitrines digitais, anúncios e redes sociais com um toque de luxo.
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4">
                                 <a
                                     href="#demo"
-                                    className="inline-flex justify-center items-center gap-2 px-8 py-4 bg-gray-800 text-white rounded-xl font-bold text-lg hover:bg-gray-700 transition-all border border-gray-700 hover:border-teal-500/30"
+                                    className="inline-flex justify-center items-center gap-2 px-8 py-4 bg-gray-800 text-white rounded-xl font-bold text-lg hover:bg-gray-700 transition-all border border-gray-700 hover:border-cyan-500/30"
                                 >
                                     Ver Exemplos
                                 </a>
@@ -96,19 +96,19 @@ const GetmidiaOtica = () => {
                             <div className="mt-8 grid grid-cols-2 gap-x-6 gap-y-3 text-sm text-gray-400">
                                 <div className="flex items-center gap-2">
                                     <CheckCircle className="w-4 h-4 text-green-500" />
-                                    <span>Modelos variados</span>
+                                    <span>Modelos IA Realistas</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <CheckCircle className="w-4 h-4 text-green-500" />
-                                    <span>Preserva a armação</span>
+                                    <span>Reflexos controlados</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <CheckCircle className="w-4 h-4 text-green-500" />
-                                    <span>Reflexos naturais</span>
+                                    <span>Alta Resolução 4K</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <CheckCircle className="w-4 h-4 text-green-500" />
-                                    <span>Encaixe perfeito</span>
+                                    <span>Cenários de Luxo</span>
                                 </div>
                             </div>
                         </motion.div>
@@ -119,22 +119,8 @@ const GetmidiaOtica = () => {
                             transition={{ duration: 0.6, delay: 0.2 }}
                             className="relative"
                         >
-                            {/* Placeholder for Product Demo Image/Animation */}
-                            <div className="aspect-square rounded-3xl bg-gray-800 border border-gray-700 overflow-hidden relative shadow-2xl shadow-black/50 group">
-                                <div className="absolute inset-0 bg-gradient-to-br from-teal-500/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <img src="/logo-otica-v2.png" alt="Demo" className="w-32 h-32 object-contain opacity-50" />
-                                </div>
-                                {/* Mock UI Elements */}
-                                <div className="absolute bottom-6 left-6 right-6 bg-gray-900/90 backdrop-blur-md p-4 rounded-xl border border-gray-700">
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                                        <span className="text-xs font-mono text-green-500">AI FITTING...</span>
-                                    </div>
-                                    <div className="h-2 bg-gray-700 rounded-full overflow-hidden">
-                                        <div className="h-full bg-teal-500 w-[70%]" />
-                                    </div>
-                                </div>
+                            <div className="aspect-square relative flex items-center justify-center">
+                                <img src={antesDepoisOtica} alt="Antes e Depois Ótica" className="w-full h-full object-contain" />
                             </div>
                         </motion.div>
                     </div>
@@ -146,8 +132,8 @@ const GetmidiaOtica = () => {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
                         {features.map((feature, index) => (
-                            <div key={index} className="p-6 bg-gray-900 rounded-2xl border border-gray-800 hover:border-teal-500/30 transition-colors">
-                                <div className="w-12 h-12 bg-teal-500/10 rounded-lg flex items-center justify-center mb-4 text-teal-500">
+                            <div key={index} className="p-6 bg-gray-900 rounded-2xl border border-gray-800 hover:border-cyan-500/30 transition-colors">
+                                <div className="w-12 h-12 bg-cyan-500/10 rounded-lg flex items-center justify-center mb-4 text-cyan-400">
                                     <Zap className="w-6 h-6" />
                                 </div>
                                 <h3 className="text-lg font-bold mb-2 text-white">{feature.title}</h3>
@@ -162,8 +148,8 @@ const GetmidiaOtica = () => {
             <section id="demo" className="py-20 bg-gray-900 border-t border-gray-800">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center mb-12">
-                        <h2 className="text-3xl font-bold text-white mb-4">Galeria de Estilo</h2>
-                        <p className="text-gray-400">Veja o que você pode criar com o GetMídia Ótica</p>
+                        <h2 className="text-3xl font-bold text-white mb-4">Galeria de Exemplos</h2>
+                        <p className="text-gray-400">Excelência visual com o GetMídia Ótica</p>
                     </div>
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -171,7 +157,7 @@ const GetmidiaOtica = () => {
                             <div
                                 key={item.id}
                                 onClick={() => setSelectedImage(item)}
-                                className="aspect-[3/4] bg-gray-800 rounded-xl overflow-hidden border border-gray-700 hover:border-teal-500/50 transition-colors group relative cursor-pointer"
+                                className="aspect-square bg-gray-800 rounded-xl overflow-hidden border border-gray-700 hover:border-cyan-500/50 transition-colors group relative cursor-pointer"
                             >
                                 <img
                                     src={item.image}
@@ -184,11 +170,6 @@ const GetmidiaOtica = () => {
                                 </div>
                             </div>
                         ))}
-                        {allGalleryItems.length === 0 && (
-                            <div className="col-span-full py-12 text-center text-gray-500 bg-gray-800/50 rounded-2xl border border-gray-700 border-dashed">
-                                <p>Nenhum exemplo na galeria ainda.</p>
-                            </div>
-                        )}
                     </div>
                 </div>
             </section>
@@ -200,7 +181,7 @@ const GetmidiaOtica = () => {
                     onClick={() => setSelectedImage(null)}
                 >
                     <button
-                        className="absolute top-4 right-4 text-white hover:text-teal-500 transition-colors"
+                        className="absolute top-4 right-4 text-white hover:text-cyan-400 transition-colors"
                         onClick={() => setSelectedImage(null)}
                     >
                         <X className="w-8 h-8" />
@@ -210,7 +191,7 @@ const GetmidiaOtica = () => {
                         className="max-w-4xl w-full bg-gray-900 rounded-2xl overflow-hidden border border-gray-800 shadow-2xl"
                         onClick={e => e.stopPropagation()}
                     >
-                        <div className="relative h-[80vh] bg-black flex items-center justify-center">
+                        <div className="relative aspect-video bg-black flex items-center justify-center">
                             <img
                                 src={selectedImage.image}
                                 alt={selectedImage.title}
