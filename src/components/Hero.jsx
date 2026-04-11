@@ -13,12 +13,12 @@ import heroProduto from '../assets/antes_depois_produto.png'
 import heroModa from '../assets/hero_moda_demo.png'
 
 const slideData = [
-  { image: heroProduto, color: 'from-yellow-500', title: 'Produtos' },
-  { image: heroFood, color: 'from-red-500', title: 'Gastronomia' },
-  { image: heroAuto, color: 'from-blue-500', title: 'Automotivo' },
-  { image: heroPet, color: 'from-green-500', title: 'Pets' },
+  { image: heroProduto, color: 'from-yellow-500', title: 'Produto' },
+  { image: heroFood, color: 'from-red-500', title: 'Food' },
+  { image: heroAuto, color: 'from-blue-500', title: 'Auto' },
+  { image: heroPet, color: 'from-green-500', title: 'Pet' },
   { image: heroOtica, color: 'from-cyan-500', title: 'Ótica' },
-  { image: heroFarma, color: 'from-orange-500', title: 'Saúde' },
+  { image: heroFarma, color: 'from-orange-500', title: 'Farma' },
   { image: heroModa, color: 'from-purple-500', title: 'Moda' },
 ];
 

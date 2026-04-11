@@ -68,9 +68,9 @@ const Navbar = () => {
                     <div className="hidden md:block">
                         <div className="ml-10 flex items-baseline space-x-4">
                             <Link to="/" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">Início</Link>
-                            <Link to="/como-funciona" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">Como funciona</Link>
-                            <a href="#features" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">Recursos</a>
-                            <a href="#pricing" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">Preços</a>
+                            <a href="/#como-funciona" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">Como funciona</a>
+                            <a href="/#features" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">Recursos</a>
+                            <a href="/#pricing" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">Preços</a>
                         </div>
                     </div>
 
@@ -106,7 +106,7 @@ const Navbar = () => {
                                         Entrar
                                     </Link>
                                     <a 
-                                        href="#pricing" 
+                                        href="/#pricing" 
                                         className="bg-yellow-500 text-black hover:bg-yellow-400 px-5 py-2 rounded-lg text-sm font-bold transition-all hover:shadow-lg hover:shadow-yellow-500/20"
                                     >
                                         Começar Agora
@@ -130,21 +130,21 @@ const Navbar = () => {
             {isOpen && (
                 <div className="md:hidden bg-gray-900 border-b border-gray-800 animate-in slide-in-from-top duration-300">
                     <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-                        <Link to="/" className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Início</Link>
-                        <Link to="/como-funciona" className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Como funciona</Link>
-                        <a href="#features" className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Recursos</a>
-                        <a href="#pricing" className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Preços</a>
+                        <Link to="/" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Início</Link>
+                        <a href="/#como-funciona" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Como funciona</a>
+                        <a href="/#features" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Recursos</a>
+                        <a href="/#pricing" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Preços</a>
                         
                         <div className="pt-4 mt-4 border-t border-gray-800">
                             {session ? (
                                 <>
-                                    <Link to="/minha-conta" className="text-yellow-500 hover:text-yellow-400 block px-3 py-2 rounded-md text-base font-medium font-bold">Minha Conta</Link>
-                                    <button onClick={handleLogout} className="text-red-400 hover:text-red-300 block w-full text-left px-3 py-2 rounded-md text-base font-medium">Sair</button>
+                                    <Link to="/minha-conta" onClick={() => setIsOpen(false)} className="text-yellow-500 hover:text-yellow-400 block px-3 py-2 rounded-md text-base font-medium font-bold">Minha Conta</Link>
+                                    <button onClick={() => { handleLogout(); setIsOpen(false); }} className="text-red-400 hover:text-red-300 block w-full text-left px-3 py-2 rounded-md text-base font-medium">Sair</button>
                                 </>
                             ) : (
                                 <>
-                                    <Link to="/login" className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Entrar</Link>
-                                    <a href="#pricing" className="text-yellow-500 font-bold block px-3 py-2 rounded-md text-base font-medium">Começar Agora</a>
+                                    <Link to="/login" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Entrar</Link>
+                                    <a href="/#pricing" onClick={() => setIsOpen(false)} className="text-yellow-500 font-bold block px-3 py-2 rounded-md text-base font-medium">Começar Agora</a>
                                 </>
                             )}
                         </div>

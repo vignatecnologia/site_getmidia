@@ -1,6 +1,7 @@
 import React from 'react'
 import Navbar from '../components/Navbar'
 import Hero from '../components/Hero'
+import HowItWorks from '../components/HowItWorks'
 import Features from '../components/Features'
 import Comparison from '../components/Comparison'
 import Solutions from '../components/Solutions'
@@ -14,6 +15,7 @@ const LandingPage = () => {
         <div className="min-h-screen bg-gray-900 text-white">
             <Navbar />
             <Hero />
+            <HowItWorks />
             <Features />
             <Comparison />
             <Solutions />

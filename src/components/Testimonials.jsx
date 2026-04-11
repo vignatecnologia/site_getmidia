@@ -1,25 +1,22 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-import { Star } from 'lucide-react'
+import { Star, User } from 'lucide-react'
 
 const testimonials = [
     {
         name: "Mariana Silva",
         role: "Loja de Roupas",
         content: "O GetMídia revolucionou meu Instagram. Antes eu gastava horas tentando fazer fotos bonitas, agora faço posts incríveis em segundos.",
-        image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
     },
     {
         name: "Carlos Eduardo",
         role: "Dropshipping",
         content: "A qualidade das imagens é impressionante. Meus anúncios converteram 3x mais depois que comecei a usar as imagens do GetMídia.",
-        image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
     },
     {
         name: "Fernanda Costa",
         role: "Artesanato",
         content: "Perfeito para quem não sabe design. Os temas sazonais me ajudam muito a manter minhas redes sociais sempre ativas.",
-        image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80"
     }
 ]
 
@@ -57,11 +54,9 @@ const Testimonials = () => {
                             </p>
 
                             <div className="flex items-center gap-4">
-                                <img
-                                    src={testimonial.image}
-                                    alt={testimonial.name}
-                                    className="w-12 h-12 rounded-full object-cover"
-                                />
+                                <div className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center">
+                                    <User className="w-6 h-6 text-gray-400" />
+                                </div>
                                 <div>
                                     <h4 className="text-white font-bold">{testimonial.name}</h4>
                                     <span className="text-primary text-sm">{testimonial.role}</span>

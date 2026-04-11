@@ -13,7 +13,6 @@ import GetmidiaAuto from './pages/GetmidiaAuto'
 import GetmidiaOtica from './pages/GetmidiaOtica'
 import GetmidiaPet from './pages/GetmidiaPet'
 import GetmidiaFarma from './pages/GetmidiaFarma'
-import HowItWorks from './pages/HowItWorks'
 import PrivacyPolicy from './pages/PrivacyPolicy'
 import TermsOfUse from './pages/TermsOfUse'
 import CookiePolicy from './pages/CookiePolicy'
@@ -46,7 +45,6 @@ function App() {
         <Route path="/otica" element={<GetmidiaOtica />} />
         <Route path="/pet" element={<GetmidiaPet />} />
         <Route path="/farma" element={<GetmidiaFarma />} />
-        <Route path="/como-funciona" element={<HowItWorks />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/admin" element={<AdminPanel />} />
