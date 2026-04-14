@@ -13,23 +13,23 @@ import fofuraImg from '../assets/fofura.jpg'
 
 const features = [
     {
-        title: "Modelos Animais",
-        description: "Transforme seu pet em um supermodelo ou use nossos modelos gerados por IA.",
+        title: "Seu Pet ou IA",
+        description: "Use a foto do seu pet real ou crie um novo do zero escolhendo espécies e raças (cães, gatos e exóticos).",
         image: modelosImg
     },
     {
-        title: "Cenários Divertidos",
-        description: "Parques, estúdios, festas de aniversário pet e muito mais.",
+        title: "Cenários Temáticos",
+        description: "Escolha entre temas de datas (Natal, Aniversário), cenários prontos ou envie seu próprio fundo.",
         image: cenarioImg
     },
     {
-        title: "Pelagem Realista",
-        description: "A IA entende e preserva a textura e as cores da pelagem do animal.",
+        title: "Fantasias e Adereços",
+        description: "Adicione roupas, fantasias divertidas e adereços exclusivos para deixar seu pet com estilo único.",
         image: pelagemImg
     },
     {
-        title: "Fofura Garantida",
-        description: "Aumente o engajamento das suas redes sociais com fotos incrivelmente fofas.",
+        title: "Pelagem Realista",
+        description: "Nossa IA avançada preserva todos os detalhes e texturas da pelagem original ou gerada.",
         image: fofuraImg
     }
 ]
@@ -91,7 +91,7 @@ const GetmidiaPet = () => {
                                 Transforme seu pet em uma <span className="text-green-500">estrela</span>
                             </h1>
                             <p className="text-xl text-gray-400 mb-8 leading-relaxed">
-                                Crie fotos profissionais de pets para produtos, serviços de banho e tosa, ou apenas para compartilhar momentos fofos.
+                                Use a foto do seu pet real ou crie um pet em IA escolhendo entre centenas de raças e espécies. Adicione fantasias e escolha cenários temáticos.
                             </p>
                             <div className="flex flex-col sm:flex-row gap-4">
                                 <a

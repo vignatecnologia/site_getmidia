@@ -1,6 +1,6 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-import { Sparkles, Calendar, Type, Zap, Image as ImageIcon, Layout } from 'lucide-react'
+import { Sparkles, Calendar, Type, Zap, Image as ImageIcon, Layout, Users, Smile } from 'lucide-react'
 
 const features = [
     {
@@ -10,18 +10,18 @@ const features = [
     },
     {
         icon: <Calendar className="w-8 h-8 text-primary" />,
-        title: "Temas Sazonais",
-        description: "Escolha uma data comemorativa e deixe a IA montar o cenário: Black Friday, Natal, Dia das Mães e muito mais."
+        title: "Cenários Flexíveis",
+        description: "Escolha entre temas de datas (Natal, Black Friday), cenários prontos ou envie seu próprio fundo para total liberdade criativa."
     },
     {
         icon: <Type className="w-8 h-8 text-primary" />,
-        title: "Editor de Texto Ágil",
-        description: "Altere preço, descrição, crie novas camadas de texto. Personalize fontes e cores para alinhar com sua marca."
+        title: "Editor Completo",
+        description: "Adicione seu logotipo, adesivos engraçados e edite textos com fontes e efeitos personalizados em elementos não gerados por IA."
     },
     {
-        icon: <ImageIcon className="w-8 h-8 text-primary" />,
-        title: "Alta Resolução",
-        description: "Baixe suas criações em qualidade máxima, prontas para postar no Instagram, Facebook ou WhatsApp."
+        icon: <Users className="w-8 h-8 text-primary" />,
+        title: "Modelos Avançados",
+        description: "Adicione modelos humanos (2 créditos) e personalize tudo: sexo, idade, etnia, cabelo e roupas. Escolha até a pose e a interação."
     },
     {
         icon: <Layout className="w-8 h-8 text-primary" />,
@@ -30,8 +30,8 @@ const features = [
     },
     {
         icon: <Zap className="w-8 h-8 text-primary" />,
-        title: "Geração Rápida",
-        description: "Não perca tempo com designers ou ferramentas complexas. Tenha seu post pronto em segundos."
+        title: "Geração Ágil",
+        description: "Tenha seu post pronto em segundos. Baixe em alta resolução para Instagram, Facebook ou WhatsApp."
     }
 ]
 
