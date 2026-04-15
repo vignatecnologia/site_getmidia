@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Star, Zap, Crown, Check, Loader2, Coins } from 'lucide-react'
@@ -56,7 +55,7 @@ const Pricing = ({ isModal = false }) => {
             const { data, error } = await supabase.functions.invoke('create-checkout', {
                 body: { 
                     planId,
-                    selectedModule: profile?.selected_module || 'product'
+                    selectedModule: profile?.selected_module || currentSession.user.user_metadata?.selected_module
                 }
             });
 

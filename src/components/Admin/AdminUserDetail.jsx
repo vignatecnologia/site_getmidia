@@ -64,8 +64,13 @@ const AdminUserDetail = ({ user, onBack }) => {
                     setPlan(normalizedPlan);
 
                     // Admin Control: Only show what is strictly in allowed_features.
+                    // If empty, fallback to the user's selected module choice instead of hardcoded 'product'
                     let features = [...(profile.allowed_features || [])];
-                    if (features.length === 0) features = ['product'];
+                    if (features.length === 0 && profile.selected_module) {
+                        features = [profile.selected_module];
+                    } else if (features.length === 0) {
+                        features = ['product']; // Absolute last resort
+                    }
                     setAllowedFeatures(features);
 
                     setFullName(profile.full_name || '');

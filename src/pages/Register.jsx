@@ -126,6 +126,32 @@ const Register = () => {
 
             if (authError) throw authError;
 
+            // 1.1 Create Profile Record in the database
+            // This ensures the user choice is preserved even before payment
+            if (authData.user) {
+                try {
+                    const { error: profileError } = await supabase
+                        .from('profiles')
+                        .insert({
+                            id: authData.user.id,
+                            full_name: `${formData.firstName} ${formData.lastName}`.trim(),
+                            phone: formData.phone,
+                            cpf_cnpj: formData.cpfCnpj,
+                            how_did_you_know: formData.how_did_you_know,
+                            selected_module: formData.selectedModule,
+                            updated_at: new Date().toISOString()
+                        });
+                    
+                    if (profileError) {
+                        console.error("Erro ao criar perfil inicial:", profileError);
+                        // We don't throw here to avoid blocking registration if RLS fails or profile exists,
+                        // but ideally RLS should allow this.
+                    }
+                } catch (err) {
+                    console.error("Falha silenciosa ao criar perfil:", err);
+                }
+            }
+
             // No Supabase, se 'identities' vier vazio, significa que o usuário já existe
             if (authData.user && authData.user.identities && authData.user.identities.length === 0) {
                 setError("Este e-mail já está cadastrado. Tente fazer login.");
