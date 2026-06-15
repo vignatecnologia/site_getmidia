@@ -70,7 +70,6 @@ const Navbar = () => {
                             <Link to="/" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">Início</Link>
                             <a href="/#como-funciona" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">Como funciona</a>
                             <a href="/#features" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">Recursos</a>
-                            <a href="/#pricing" className="text-gray-300 hover:text-white px-3 py-2 rounded-md text-sm font-medium transition-colors">Preços</a>
                         </div>
                     </div>
 
@@ -105,12 +104,6 @@ const Navbar = () => {
                                     >
                                         Entrar
                                     </Link>
-                                    <a 
-                                        href="/#pricing" 
-                                        className="bg-yellow-500 text-black hover:bg-yellow-400 px-5 py-2 rounded-lg text-sm font-bold transition-all hover:shadow-lg hover:shadow-yellow-500/20"
-                                    >
-                                        Começar Agora
-                                    </a>
                                 </>
                             )}
                         </div>
@@ -133,7 +126,6 @@ const Navbar = () => {
                         <Link to="/" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Início</Link>
                         <a href="/#como-funciona" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Como funciona</a>
                         <a href="/#features" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Recursos</a>
-                        <a href="/#pricing" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Preços</a>
                         
                         <div className="pt-4 mt-4 border-t border-gray-800">
                             {session ? (
@@ -144,7 +136,6 @@ const Navbar = () => {
                             ) : (
                                 <>
                                     <Link to="/login" onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-white block px-3 py-2 rounded-md text-base font-medium">Entrar</Link>
-                                    <a href="/#pricing" onClick={() => setIsOpen(false)} className="text-yellow-500 font-bold block px-3 py-2 rounded-md text-base font-medium">Começar Agora</a>
                                 </>
                             )}
                         </div>

@@ -35,7 +35,7 @@ export const PaymentFailure = () => {
                     Houve um problema ao processar seu pagamento. Nenhuma cobrança foi feita.
                 </p>
                 <Link
-                    to="/#pricing"
+                    to="/minha-conta"
                     className="block w-full bg-gray-700 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-xl transition-colors"
                 >
                     Tentar Novamente
