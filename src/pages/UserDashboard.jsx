@@ -265,6 +265,7 @@ const UserDashboard = () => {
                                                 <option value="optical">Ótica</option>
                                                 <option value="pet">Pet</option>
                                                 <option value="farma">Farma</option>
+                                                <option value="credito">Crédito</option>
                                             </select>
                                         </div>
                                         <div className="md:col-span-2">

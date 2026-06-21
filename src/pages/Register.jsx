@@ -359,6 +359,7 @@ const Register = () => {
                                 <option value="optical">Ótica</option>
                                 <option value="pet">Pet</option>
                                 <option value="farma">Farma</option>
+                                <option value="credito">Crédito</option>
                             </select>
                             <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500 pointer-events-none" />
                         </div>

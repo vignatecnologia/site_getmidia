@@ -150,7 +150,7 @@ const AdminUserDetail = ({ user, onBack }) => {
     };
 
     // --- Features Constants ---
-    const ALL_FEATURES = ['product', 'food', 'fashion', 'optical', 'pet', 'auto', 'farma'];
+    const ALL_FEATURES = ['product', 'food', 'fashion', 'optical', 'pet', 'auto', 'farma', 'credito'];
     const FEATURE_LABELS = {
         'product': 'Produto',
         'food': 'Food',
@@ -159,6 +159,7 @@ const AdminUserDetail = ({ user, onBack }) => {
         'pet': 'PET',
         'auto': 'Auto',
         'farma': 'Farma',
+        'credito': 'Crédito',
     };
 
     const handleToggleFeature = (feature) => {
